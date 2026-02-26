@@ -1,0 +1,83 @@
+# Supabase local development configuration.
+# Reference: https://supabase.com/docs/guides/cli/config
+#
+# Staging project ref: rjhzkgomgsztcyrhkywf
+# To push migrations to staging:
+#   supabase db push --db-url "postgresql://postgres.<ref>:<password>@aws-0-us-east-1.pooler.supabase.com:6543/postgres"
+# To link this repo to the staging project:
+#   supabase link --project-ref rjhzkgomgsztcyrhkywf
+
+project_id = "fitsync"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[api.tls]
+enabled = false
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 17
+
+[db.pooler]
+enabled = false
+port = 54329
+pool_mode = "transaction"
+default_pool_size = 20
+max_client_conn = 100
+
+[db.seed]
+enabled = true
+sql_paths = ["./seed.sql"]
+
+[realtime]
+enabled = true
+
+[studio]
+enabled = true
+port = 54323
+api_url = "http://127.0.0.1"
+
+[inbucket]
+enabled = true
+port = 54324
+
+[storage]
+enabled = true
+file_size_limit = "50MiB"
+
+[storage.image_transformation]
+enabled = true
+
+[auth]
+enabled = true
+# Next.js dev server.
+site_url = "http://127.0.0.1:3000"
+# Allow redirects back to the web app and mobile app (fitsync:// scheme for OAuth, deferred to Phase 2).
+additional_redirect_urls = [
+  "http://localhost:3000",
+  "fitsync://",
+]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+refresh_token_reuse_interval = 10
+enable_signup = true
+enable_anonymous_sign_ins = false
+
+[auth.email]
+enable_signup = true
+# Disable email confirmation for local dev — seed users work without clicking links.
+# Set to true in staging/production via Supabase dashboard.
+enable_confirmations = false
+double_confirm_changes = true
+secure_password_change = false
+max_frequency = "1s"
+
+[auth.sms]
+enable_signup = false
+enable_confirmations = false

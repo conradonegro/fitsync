@@ -21,6 +21,7 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@fitsync/database-types": "workspace:*",
     "@fitsync/eslint-config": "workspace:*",
     "@fitsync/typescript-config": "workspace:*",
     "typescript": "^5.7.3"

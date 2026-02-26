@@ -28,6 +28,7 @@ android/
 # Supabase
 supabase/.temp/
 supabase/.branches/
+supabase/snippets/
 
 # Testing
 coverage/

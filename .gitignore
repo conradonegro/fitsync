@@ -1,0 +1,57 @@
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+.next/
+out/
+build/
+
+# Expo / React Native
+.expo/
+ios/
+android/
+
+# Turbo
+.turbo/
+
+# Environment files
+.env
+.env.local
+.env.production
+.env.staging
+!.env.example
+!**/.env.local.example
+
+# Supabase
+supabase/.temp/
+supabase/.branches/
+
+# Testing
+coverage/
+playwright-report/
+test-results/
+maestro/screenshots/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Sentry
+.sentryclirc
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Claude Code — local permission overrides (machine-specific, never commit)
+.claude/settings.local.json

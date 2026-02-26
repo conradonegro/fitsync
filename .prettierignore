@@ -1,0 +1,9 @@
+node_modules
+dist
+.next
+out
+build
+.expo
+coverage
+pnpm-lock.yaml
+packages/database-types/src/types.ts

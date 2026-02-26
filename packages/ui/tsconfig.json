@@ -1,0 +1,13 @@
+{
+  "extends": "@fitsync/typescript-config/base.json",
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "jsx": "react-jsx",
+    "declaration": false,
+    "declarationMap": false,
+    "allowImportingTsExtensions": true
+  },
+  "include": ["src", "nativewind-env.d.ts"],
+  "exclude": ["node_modules", "dist"]
+}

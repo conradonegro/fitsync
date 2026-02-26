@@ -1,0 +1,34 @@
+{
+  "common": {
+    "loading": "Načítání...",
+    "error": "Něco se pokazilo",
+    "retry": "Zkusit znovu",
+    "save": "Uložit",
+    "cancel": "Zrušit",
+    "confirm": "Potvrdit",
+    "delete": "Smazat",
+    "edit": "Upravit",
+    "back": "Zpět",
+    "next": "Další",
+    "done": "Hotovo",
+    "close": "Zavřít"
+  },
+  "auth": {
+    "sign_in": "Přihlásit se",
+    "sign_up": "Registrovat se",
+    "sign_out": "Odhlásit se",
+    "email": "E-mail",
+    "password": "Heslo",
+    "full_name": "Celé jméno",
+    "role_label": "Jsem...",
+    "role_trainer": "Trenér",
+    "role_athlete": "Sportovec",
+    "already_have_account": "Máte již účet? {link}",
+    "no_account": "Nemáte účet? {link}"
+  },
+  "errors": {
+    "required": "Toto pole je povinné",
+    "invalid_email": "Zadejte platnou e-mailovou adresu",
+    "password_too_short": "Heslo musí mít alespoň 8 znaků"
+  }
+}

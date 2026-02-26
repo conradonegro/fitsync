@@ -108,7 +108,9 @@ export default function LoginPage() {
 
           <Button
             label={t('sign_in')}
-            onPress={() => { void handleSignIn(); }}
+            onPress={() => {
+              void handleSignIn();
+            }}
             loading={loading}
             variant="primary"
           />

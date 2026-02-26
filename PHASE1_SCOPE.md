@@ -34,6 +34,7 @@ Every layer of the stack is exercised. Every infrastructure decision is validate
 A working Turborepo monorepo with all packages and apps bootstrapped, building, linting, and type-checking cleanly.
 
 Includes:
+
 - `pnpm-workspace.yaml`, `.npmrc` (`node-linker=hoisted`), `turbo.json` with `^build` pipeline.
 - All packages created with correct `package.json`, `tsconfig.json` extending base, and empty `src/index.ts`.
 - `packages/typescript-config` and `packages/eslint-config` shared and consumed by all packages.
@@ -48,6 +49,7 @@ Includes:
 Local and staging environments fully operational. Schema deployed and versioned.
 
 Includes:
+
 - `supabase/config.toml` configured for local development.
 - All migrations written and applied locally and to staging.
 - `supabase gen types` wired to `packages/database-types/src/types.ts`.
@@ -56,6 +58,7 @@ Includes:
 - `supabase/seed.sql` with deterministic test data: one trainer, one athlete, one active relationship.
 
 **Schema delivered in this phase** (see Section 4 for full column specs):
+
 - `profiles`
 - `user_devices`
 - `coach_athlete_relationships`
@@ -70,6 +73,7 @@ Includes:
 Full auth flow on both platforms. Role assigned at signup. Session persisted correctly.
 
 Includes:
+
 - **Web**: Supabase Auth with email/password. `middleware.ts` for session refresh. Protected routes redirect unauthenticated users.
 - **Mobile**: Supabase Auth with email/password. Session stored via AsyncStorage adapter. `device_id` generated on first launch and stored in `expo-secure-store`. `device_id` registered in `user_devices` on first login.
 - **Shared**: Role selection UI at signup (`trainer` | `athlete`). Role stored in `profiles` on account creation.
@@ -82,6 +86,7 @@ OAuth (Google/Apple Sign-In) is **not** in Phase 1 but the URL scheme is registe
 The trainer's core relationship management surface on the web app.
 
 Includes:
+
 - Trainer dashboard layout with navigation.
 - **Athlete roster page**: list of connected athletes with status (`pending` / `active`).
 - **Invite athlete flow**: form to enter athlete email → triggers Edge Function → Resend sends invitation email with accept link.
@@ -93,6 +98,7 @@ Includes:
 The athlete's core in-gym logging flow, fully functional offline.
 
 Includes:
+
 - Athlete home screen showing today's date and a "Start Workout" entry point.
 - **Session creation**: tapping "Start Workout" creates a `workout_session` record locally in SQLite.
 - **Exercise logging**: athlete can add exercises by name (free text for Phase 1, no exercise library yet), log sets with reps and weight.
@@ -107,6 +113,7 @@ Includes:
 The bridge between the mobile SQLite queue and the Supabase backend.
 
 Includes:
+
 - **Flush on reconnect**: when connectivity is restored, the event queue flushes in batches of 50, ordered by `client_sequence ASC`.
 - **Idempotency**: server handles duplicate `(device_id, client_sequence)` submissions gracefully.
 - **Catch-up on reconnect**: on every reconnect, query for all server events with `server_created_at > last_server_timestamp`. `last_server_timestamp` persisted in SQLite.
@@ -119,6 +126,7 @@ Includes:
 Fully automated pipeline from PR to production.
 
 Includes:
+
 - **`ci.yml`**: triggered on every PR. Runs typecheck, ESLint, Jest, Playwright (web E2E against local Supabase with seed data). Blocks merge on failure.
 - **`deploy-web.yml`**: triggered on merge to `main`. Deploys to Vercel production via Vercel CLI. Requires all CI checks to have passed.
 - **`eas-build.yml`**: triggered on merge to `develop` (EAS preview profile) and `main` (EAS production profile). Never triggered on PRs.
@@ -131,6 +139,7 @@ Includes:
 Errors are visible in production from day one.
 
 Includes:
+
 - Sentry error capture active on both web and mobile.
 - Source maps uploaded during CI builds for both platforms.
 - Basic Sentry alerts configured (new issue, regression).
@@ -141,26 +150,27 @@ Includes:
 
 The following are **not** in Phase 1. Any PR introducing these is out of scope and should be deferred.
 
-| Excluded Feature | Reason | Target Phase |
-|---|---|---|
-| Exercise library / catalog | Free-text exercise names are sufficient to validate sync | Phase 2 |
-| Coach program builder | No structured programs needed to prove sync model | Phase 2 |
-| Workout history dashboard (analytics) | Placeholder sufficient in Phase 1 | Phase 2 |
-| Push notifications | Email-only for MVP (ADR-016) | Phase 2 |
-| Apple Health / Health Connect | Deferred by design (ADR — health data) | Phase 2 |
-| Stripe / payments | Schema stubbed, no logic | Phase 2 |
-| `corrections` event type | Requires program builder to be meaningful | Phase 2 |
-| OAuth (Google / Apple Sign-In) | URL scheme registered, implementation deferred | Phase 2 |
-| GDPR erasure flow | `pending_deletion` column added to schema, job deferred | Phase 2 |
-| Media attachments | Excluded from MVP entirely | Phase 2 |
-| Full parity web/mobile | Role-based split for MVP (ADR — feature split) | Post-MVP |
-| Maestro iOS CI | Android only in CI (ADR-025) | Post-MVP |
+| Excluded Feature                      | Reason                                                   | Target Phase |
+| ------------------------------------- | -------------------------------------------------------- | ------------ |
+| Exercise library / catalog            | Free-text exercise names are sufficient to validate sync | Phase 2      |
+| Coach program builder                 | No structured programs needed to prove sync model        | Phase 2      |
+| Workout history dashboard (analytics) | Placeholder sufficient in Phase 1                        | Phase 2      |
+| Push notifications                    | Email-only for MVP (ADR-016)                             | Phase 2      |
+| Apple Health / Health Connect         | Deferred by design (ADR — health data)                   | Phase 2      |
+| Stripe / payments                     | Schema stubbed, no logic                                 | Phase 2      |
+| `corrections` event type              | Requires program builder to be meaningful                | Phase 2      |
+| OAuth (Google / Apple Sign-In)        | URL scheme registered, implementation deferred           | Phase 2      |
+| GDPR erasure flow                     | `pending_deletion` column added to schema, job deferred  | Phase 2      |
+| Media attachments                     | Excluded from MVP entirely                               | Phase 2      |
+| Full parity web/mobile                | Role-based split for MVP (ADR — feature split)           | Post-MVP     |
+| Maestro iOS CI                        | Android only in CI (ADR-025)                             | Post-MVP     |
 
 ---
 
 ## 4. Acceptance Criteria
 
 ### AC-D1: Monorepo Scaffold
+
 - [ ] `pnpm install` from root succeeds with no errors.
 - [ ] `pnpm build` from root builds all packages and apps in dependency order.
 - [ ] `pnpm typecheck` from root returns zero TypeScript errors.
@@ -171,6 +181,7 @@ The following are **not** in Phase 1. Any PR introducing these is out of scope a
 - [ ] A shared UI component renders correctly on web (DOM) and mobile (native) from the same `@fitsync/ui` import.
 
 ### AC-D2: Supabase Infrastructure
+
 - [ ] `supabase start` succeeds locally.
 - [ ] All migrations apply cleanly on a fresh local instance: `supabase db reset` produces no errors.
 - [ ] All migrations apply cleanly to the staging Supabase project.
@@ -181,6 +192,7 @@ The following are **not** in Phase 1. Any PR introducing these is out of scope a
 - [ ] RLS verified: trainer can read their connected athlete's `workout_events` but not an unconnected athlete's.
 
 ### AC-D3: Authentication
+
 - [ ] Trainer can sign up with email/password and role `trainer` on web.
 - [ ] Athlete can sign up with email/password and role `athlete` on mobile.
 - [ ] Both can log in and log out.
@@ -191,6 +203,7 @@ The following are **not** in Phase 1. Any PR introducing these is out of scope a
 - [ ] Next.js `middleware.ts` refreshes expired sessions without user action (verify by shortening token expiry in local config and confirming no silent logout).
 
 ### AC-D4: Trainer Athlete Management
+
 - [ ] Trainer can see their athlete roster (empty state handled).
 - [ ] Trainer can enter an athlete's email and trigger an invitation.
 - [ ] Resend delivers the invitation email (verify in Resend dashboard).
@@ -199,6 +212,7 @@ The following are **not** in Phase 1. Any PR introducing these is out of scope a
 - [ ] Athlete's history choice is correctly reflected in `history_shared_from` column.
 
 ### AC-D5: Offline Workout Logging
+
 - [ ] Athlete can start a workout session with airplane mode enabled.
 - [ ] Athlete can log sets (exercise name, reps, weight) with no network connection.
 - [ ] Logged sets appear immediately in the UI (optimistic update).
@@ -207,6 +221,7 @@ The following are **not** in Phase 1. Any PR introducing these is out of scope a
 - [ ] SQLite contains the queued events after offline logging (verify via Expo dev tools or debug screen).
 
 ### AC-D6: Sync Engine
+
 - [ ] After re-enabling network, queued events flush automatically without user action.
 - [ ] Flushed events appear in Supabase `workout_events` table with correct `server_created_at`.
 - [ ] SQLite queue is empty after successful flush.
@@ -216,6 +231,7 @@ The following are **not** in Phase 1. Any PR introducing these is out of scope a
 - [ ] Catch-up query on reconnect retrieves any events missed during disconnection.
 
 ### AC-D7: CI/CD Pipeline
+
 - [ ] A PR with a TypeScript error blocks merge.
 - [ ] A PR with an ESLint error blocks merge.
 - [ ] A failing Jest test blocks merge.
@@ -226,6 +242,7 @@ The following are **not** in Phase 1. Any PR introducing these is out of scope a
 - [ ] A schema change without a corresponding `gen:types` run causes CI to fail.
 
 ### AC-D8: Observability
+
 - [ ] Triggering a deliberate runtime error in the web app creates an issue in Sentry.
 - [ ] Triggering a deliberate runtime error in the mobile app creates an issue in Sentry.
 - [ ] Sentry issues include a readable stack trace (source maps working).

@@ -64,7 +64,9 @@ export const createServerClient = (cookieStore: Awaited<ReturnType<typeof cookie
        * @supabase/ssr type (satisfies contravariance), then cast to ServerCookieOptions
        * when forwarding to cookieStore.set (structurally compatible, no runtime conversion).
        */
-      setAll: (cookiesToSet: Array<{ name: string; value: string; options: Record<string, unknown> }>) => {
+      setAll: (
+        cookiesToSet: Array<{ name: string; value: string; options: Record<string, unknown> }>,
+      ) => {
         cookiesToSet.forEach(({ name, value, options }) => {
           cookieStore.set(name, value, options as unknown as ServerCookieOptions);
         });

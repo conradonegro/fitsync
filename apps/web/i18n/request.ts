@@ -14,9 +14,8 @@ import { getRequestConfig } from 'next-intl/server';
 export default getRequestConfig(async () => {
   const locale = 'en';
 
-  const messages = (
-    await import(`../../../packages/shared/src/locales/${locale}.json`)
-  ).default as AbstractIntlMessages;
+  const messages = (await import(`../../../packages/shared/src/locales/${locale}.json`))
+    .default as AbstractIntlMessages;
 
   return { locale, messages };
 });

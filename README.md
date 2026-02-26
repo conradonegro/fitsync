@@ -9,13 +9,13 @@ Professional coaching platform for independent personal trainers and athletes.
 > These must be installed before running anything. Missing any of them will cause
 > confusing errors on first setup.
 
-| Tool | Version | Required For |
-|---|---|---|
-| Node.js | 20.20.0 | Everything |
-| pnpm | 10.30.2 | Package management |
-| Docker Desktop | Latest | `supabase start` (local DB) |
-| Supabase CLI | Latest | Local Supabase, migrations, type gen |
-| EAS CLI | Latest | Mobile builds |
+| Tool           | Version | Required For                         |
+| -------------- | ------- | ------------------------------------ |
+| Node.js        | 20.20.0 | Everything                           |
+| pnpm           | 10.30.2 | Package management                   |
+| Docker Desktop | Latest  | `supabase start` (local DB)          |
+| Supabase CLI   | Latest  | Local Supabase, migrations, type gen |
+| EAS CLI        | Latest  | Mobile builds                        |
 
 ```bash
 # Verify your environment
@@ -114,6 +114,7 @@ data model, sync design, and tech stack rationale.
 See `.env.example` for all required variables with descriptions.
 
 **Security rules — non-negotiable:**
+
 - The `SUPABASE_SERVICE_ROLE_KEY` must NEVER appear in any client code or mobile bundle.
 - Never commit `.env.local` or any file with real secrets.
 - All production secrets live in the CI provider vault (GitHub Actions secrets).
@@ -122,13 +123,13 @@ See `.env.example` for all required variables with descriptions.
 
 ## Branch Strategy
 
-| Branch | Purpose |
-|---|---|
-| `main` | Production-ready code. Protected. |
-| `develop` | Integration branch. All features merge here first. |
-| `feature/<name>` | New features. |
-| `fix/<name>` | Bug fixes. |
-| `chore/<name>` | Maintenance, dependency updates. |
+| Branch           | Purpose                                            |
+| ---------------- | -------------------------------------------------- |
+| `main`           | Production-ready code. Protected.                  |
+| `develop`        | Integration branch. All features merge here first. |
+| `feature/<name>` | New features.                                      |
+| `fix/<name>`     | Bug fixes.                                         |
+| `chore/<name>`   | Maintenance, dependency updates.                   |
 
 PRs require passing CI (typecheck + lint + tests) before merge.
 

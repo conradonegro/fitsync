@@ -33,9 +33,7 @@ const nextConfig = {
     config.resolve.extensions = [
       '.web.tsx',
       '.web.ts',
-      ...config.resolve.extensions.filter(
-        (e: string) => e !== '.web.tsx' && e !== '.web.ts',
-      ),
+      ...config.resolve.extensions.filter((e: string) => e !== '.web.tsx' && e !== '.web.ts'),
     ];
     return config;
   },

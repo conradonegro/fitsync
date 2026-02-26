@@ -78,17 +78,17 @@ Profile (trainer or athlete)
 
 ### Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Web | Next.js 15, TailwindCSS, next-intl |
-| Mobile | Expo 52 (managed), React Native 0.76, NativeWind v4, Expo Router |
-| Backend | Supabase (Postgres + RLS + Auth + Realtime + Edge Functions) |
-| State | TanStack Query v5, Zustand v5 |
-| Offline | expo-sqlite (event queue), expo-secure-store (device_id + tokens) |
-| i18n | next-intl (web), react-i18next (mobile), shared JSON in packages/shared/src/locales/ |
-| Email | Resend (via Edge Functions) |
-| Errors | Sentry (@sentry/nextjs, @sentry/react-native) |
-| Build | Turborepo 2, pnpm 10, EAS Build, Vercel |
+| Layer   | Technology                                                                           |
+| ------- | ------------------------------------------------------------------------------------ |
+| Web     | Next.js 15, TailwindCSS, next-intl                                                   |
+| Mobile  | Expo 52 (managed), React Native 0.76, NativeWind v4, Expo Router                     |
+| Backend | Supabase (Postgres + RLS + Auth + Realtime + Edge Functions)                         |
+| State   | TanStack Query v5, Zustand v5                                                        |
+| Offline | expo-sqlite (event queue), expo-secure-store (device_id + tokens)                    |
+| i18n    | next-intl (web), react-i18next (mobile), shared JSON in packages/shared/src/locales/ |
+| Email   | Resend (via Edge Functions)                                                          |
+| Errors  | Sentry (@sentry/nextjs, @sentry/react-native)                                        |
+| Build   | Turborepo 2, pnpm 10, EAS Build, Vercel                                              |
 
 ### TypeScript Configuration
 
@@ -99,11 +99,13 @@ Profile (trainer or athlete)
 ### Environment Variables
 
 **`apps/web/.env.local`**
+
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SENTRY_DSN`, `SENTRY_AUTH_TOKEN`
 
 **`apps/mobile/.env.local`** (build-time only, injected via `app.config.ts`)
+
 - `SUPABASE_URL`, `SUPABASE_ANON_KEY`
 - `SENTRY_DSN`, `EAS_PROJECT_ID`
 

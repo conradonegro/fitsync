@@ -193,13 +193,13 @@ The following are **not** in Phase 1. Any PR introducing these is out of scope a
 
 ### AC-D3: Authentication
 
-- [ ] Trainer can sign up with email/password and role `trainer` on web.
-- [ ] Athlete can sign up with email/password and role `athlete` on mobile.
-- [ ] Both can log in and log out.
-- [ ] Unauthenticated users are redirected to login on both platforms.
-- [ ] Session persists across app restarts on mobile.
-- [ ] `device_id` is present in `user_devices` after first mobile login.
-- [ ] `device_id` does not change across app restarts.
+- [x] Trainer can sign up with email/password and role `trainer` on web.
+- [x] Athlete can sign up with email/password and role `athlete` on mobile.
+- [x] Both can log in and log out.
+- [x] Unauthenticated users are redirected to login on both platforms.
+- [x] Session persists across app restarts on mobile.
+- [x] `device_id` is present in `user_devices` after first mobile login.
+- [x] `device_id` does not change across app restarts.
 - [ ] Next.js `middleware.ts` refreshes expired sessions without user action (verify by shortening token expiry in local config and confirming no silent logout).
 
 ### AC-D4: Trainer Athlete Management

@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 import { supabase } from '@fitsync/database';
-import { loginSchema } from '@fitsync/shared';
 import { Button } from '@fitsync/ui';
 
 /**
@@ -28,21 +27,21 @@ export default function LoginScreen() {
   async function handleSignIn() {
     setError(null);
 
-    const result = loginSchema.safeParse({ email, password });
-    if (!result.success) {
-      const firstIssue = result.error.issues[0];
-      if (firstIssue?.path[0] === 'email') {
-        setError(tErrors('invalid_email'));
-      } else {
-        setError(tErrors('password_too_short'));
-      }
+    // Only validate email format — do NOT enforce password min-length on login.
+    // A user with a short password would be permanently locked out here.
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError(tErrors('invalid_email'));
+      return;
+    }
+    if (!password) {
+      setError(tErrors('required'));
       return;
     }
 
     setLoading(true);
     const { error: authError } = await supabase.auth.signInWithPassword({
-      email: result.data.email,
-      password: result.data.password,
+      email,
+      password,
     });
     setLoading(false);
 

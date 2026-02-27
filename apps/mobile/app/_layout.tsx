@@ -58,12 +58,20 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 
       // Register (or refresh last_seen_at for) this device whenever the user
       // signs in or the app restores an existing session. Runs fire-and-forget
-      // so it never blocks navigation. Errors are logged in __DEV__ only.
+      // so it never blocks navigation. All errors are caught and logged in __DEV__.
       if (session?.user && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
+        const userId = session.user.id;
         void (async () => {
-          const deviceId = await getOrCreateDeviceId();
-          setDeviceId(deviceId);
-          await registerDevice(session.user.id, deviceId);
+          try {
+            if (__DEV__) console.log('[AuthGate] Registering device for user', userId);
+            const deviceId = await getOrCreateDeviceId();
+            if (__DEV__) console.log('[AuthGate] Device ID:', deviceId);
+            setDeviceId(deviceId);
+            await registerDevice(userId, deviceId);
+            if (__DEV__) console.log('[AuthGate] Device registered successfully');
+          } catch (err) {
+            if (__DEV__) console.error('[AuthGate] Device registration threw:', err);
+          }
         })();
       }
     });

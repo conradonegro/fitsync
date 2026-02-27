@@ -6,10 +6,25 @@ import { supabase } from '@fitsync/database';
 
 const DEVICE_ID_KEY = 'fitsync_device_id';
 
+/** Generates a UUID v4. Uses crypto.randomUUID() when available (Hermes/modern
+ *  engines), falls back to Math.random for older Expo Go environments. */
+function generateUUID(): string {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const cryptoApi = (globalThis as any).crypto as { randomUUID?: () => string } | undefined;
+  if (typeof cryptoApi?.randomUUID === 'function') {
+    return cryptoApi.randomUUID();
+  }
+  // RFC 4122 v4 — not cryptographically secure, but device_id only needs uniqueness
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (ch) => {
+    const r = (Math.random() * 16) | 0;
+    return (ch === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+  });
+}
+
 export async function getOrCreateDeviceId(): Promise<string> {
   const stored = await SecureStore.getItemAsync(DEVICE_ID_KEY);
   if (stored) return stored;
-  const id = globalThis.crypto.randomUUID();
+  const id = generateUUID();
   await SecureStore.setItemAsync(DEVICE_ID_KEY, id);
   return id;
 }

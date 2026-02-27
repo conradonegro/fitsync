@@ -7,6 +7,8 @@ import { supabase } from '@fitsync/database';
 import { signupSchema, type UserRole } from '@fitsync/shared';
 import { Button } from '@fitsync/ui';
 
+type FieldErrors = Partial<Record<'full_name' | 'email' | 'password', string>>;
+
 /**
  * Mobile signup screen.
  *
@@ -23,22 +25,26 @@ export default function SignupScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<UserRole>('athlete');
-  const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function handleSignUp() {
-    setError(null);
+    setFieldErrors({});
+    setSubmitError(null);
 
     const result = signupSchema.safeParse({ full_name: fullName, email, password, role });
     if (!result.success) {
-      const firstIssue = result.error.issues[0];
-      if (firstIssue?.path[0] === 'email') {
-        setError(tErrors('invalid_email'));
-      } else if (firstIssue?.path[0] === 'password') {
-        setError(tErrors('password_too_short'));
-      } else {
-        setError(tErrors('required'));
+      const errors: FieldErrors = {};
+      for (const issue of result.error.issues) {
+        const field = issue.path[0] as keyof FieldErrors;
+        if (!errors[field]) {
+          if (field === 'email') errors.email = tErrors('invalid_email');
+          else if (field === 'password') errors.password = tErrors('password_too_short');
+          else errors.full_name = tErrors('required');
+        }
       }
+      setFieldErrors(errors);
       return;
     }
 
@@ -56,10 +62,14 @@ export default function SignupScreen() {
     setLoading(false);
 
     if (authError) {
-      setError(authError.message);
+      setSubmitError(authError.message);
     }
     // On success: onAuthStateChange in AuthGate fires → device registered → navigation handled
   }
+
+  const inputBase = 'rounded-md border px-3 py-2 text-sm text-gray-900';
+  const inputValid = `${inputBase} border-gray-300`;
+  const inputInvalid = `${inputBase} border-red-400`;
 
   return (
     <View className="flex-1 items-center justify-center bg-white p-8">
@@ -74,8 +84,11 @@ export default function SignupScreen() {
               onChangeText={setFullName}
               autoCapitalize="words"
               autoComplete="name"
-              className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
+              className={fieldErrors.full_name ? inputInvalid : inputValid}
             />
+            {fieldErrors.full_name && (
+              <Text className="mt-1 text-xs text-red-600">{fieldErrors.full_name}</Text>
+            )}
           </View>
 
           <View>
@@ -86,8 +99,11 @@ export default function SignupScreen() {
               autoCapitalize="none"
               keyboardType="email-address"
               autoComplete="email"
-              className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
+              className={fieldErrors.email ? inputInvalid : inputValid}
             />
+            {fieldErrors.email && (
+              <Text className="mt-1 text-xs text-red-600">{fieldErrors.email}</Text>
+            )}
           </View>
 
           <View>
@@ -97,8 +113,11 @@ export default function SignupScreen() {
               onChangeText={setPassword}
               secureTextEntry
               autoComplete="new-password"
-              className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
+              className={fieldErrors.password ? inputInvalid : inputValid}
             />
+            {fieldErrors.password && (
+              <Text className="mt-1 text-xs text-red-600">{fieldErrors.password}</Text>
+            )}
           </View>
 
           <View>
@@ -124,7 +143,7 @@ export default function SignupScreen() {
             </View>
           </View>
 
-          {error !== null && <Text className="text-sm text-red-600">{error}</Text>}
+          {submitError !== null && <Text className="text-sm text-red-600">{submitError}</Text>}
 
           <Button
             label={t('sign_up')}

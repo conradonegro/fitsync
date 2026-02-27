@@ -10,16 +10,22 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
+import Constants from 'expo-constants';
 
 import type { Database } from '@fitsync/database-types';
 
 // In React Native, env vars are injected at build time via app.config.ts
-// and accessed through expo-constants at runtime.
-// This import is resolved in the mobile app which provides these globals.
-declare const SUPABASE_URL: string;
-declare const SUPABASE_ANON_KEY: string;
+// and accessed through expo-constants at runtime (not as global constants).
+const supabaseUrl = Constants.expoConfig?.extra?.supabaseUrl as string | undefined;
+const supabaseAnonKey = Constants.expoConfig?.extra?.supabaseAnonKey as string | undefined;
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error(
+    'Missing Supabase config: supabaseUrl and supabaseAnonKey must be set in app.config.ts extra',
+  );
+}
+
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     storage: AsyncStorage,
     autoRefreshToken: true,

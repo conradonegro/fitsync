@@ -11,7 +11,7 @@ import { View } from 'react-native';
 import { supabase } from '@fitsync/database';
 
 import '../i18n';
-import { getOrCreateDeviceId, useAuthStore } from '../store/auth.store';
+import { getOrCreateDeviceId, registerDevice, useAuthStore } from '../store/auth.store';
 
 /**
  * Sentry must be initialized before any app code runs.
@@ -46,11 +46,6 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   const { user, isInitializing, setUser, setDeviceId, setIsInitializing } = useAuthStore();
 
   useEffect(() => {
-    // Resolve device_id without blocking session initialisation
-    getOrCreateDeviceId()
-      .then(setDeviceId)
-      .catch(() => undefined);
-
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       setIsInitializing(false);
@@ -58,8 +53,19 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
+
+      // Register (or refresh last_seen_at for) this device whenever the user
+      // signs in or the app restores an existing session. Runs fire-and-forget
+      // so it never blocks navigation. Errors are logged in __DEV__ only.
+      if (session?.user && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
+        void (async () => {
+          const deviceId = await getOrCreateDeviceId();
+          setDeviceId(deviceId);
+          await registerDevice(session.user.id, deviceId);
+        })();
+      }
     });
 
     return () => {

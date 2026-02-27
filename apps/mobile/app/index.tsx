@@ -11,12 +11,13 @@ import { useAuthStore } from '../store/auth.store';
 export default function HomeScreen() {
   const { t } = useTranslation('common');
   const { t: tAuth } = useTranslation('auth');
-  const { signOut } = useAuthStore();
+  const { user, signOut } = useAuthStore();
 
   return (
     <View className="flex-1 items-center justify-center bg-white p-6">
       <Text className="text-4xl font-bold text-gray-900">FitSync</Text>
       <Text className="mt-2 text-base text-gray-500">{t('loading')}</Text>
+      {user?.email && <Text className="mt-1 text-sm text-gray-400">{user.email}</Text>}
       <View className="mt-8 w-full">
         <Button
           label={tAuth('sign_out')}

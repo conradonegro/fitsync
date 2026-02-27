@@ -15,12 +15,15 @@ export async function getOrCreateDeviceId(): Promise<string> {
 }
 
 export async function registerDevice(userId: string, deviceId: string): Promise<void> {
-  await supabase
+  const { error } = await supabase
     .from('user_devices')
     .upsert(
       { user_id: userId, device_id: deviceId, last_seen_at: new Date().toISOString() },
       { onConflict: 'user_id,device_id' },
     );
+  if (__DEV__ && error) {
+    console.error('[registerDevice] Failed:', error.message, error.details);
+  }
 }
 
 interface AuthState {

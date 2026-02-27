@@ -7,20 +7,17 @@ import { supabase } from '@fitsync/database';
 import { signupSchema, type UserRole } from '@fitsync/shared';
 import { Button } from '@fitsync/ui';
 
-import { getOrCreateDeviceId, registerDevice, useAuthStore } from '../../store/auth.store';
-
 /**
  * Mobile signup screen.
  *
  * Stores full_name and role in user_metadata so the handle_new_user() trigger
- * can populate public.profiles. On success, registers the device and updates
- * the auth store — the AuthGate handles navigation automatically.
+ * can populate public.profiles. On success the AuthGate detects the SIGNED_IN
+ * event, registers the device, and navigates to the home screen automatically.
  */
 export default function SignupScreen() {
   const { t } = useTranslation('auth');
   const { t: tErrors } = useTranslation('errors');
   const router = useRouter();
-  const { setUser, setDeviceId } = useAuthStore();
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -46,7 +43,7 @@ export default function SignupScreen() {
     }
 
     setLoading(true);
-    const { data, error: authError } = await supabase.auth.signUp({
+    const { error: authError } = await supabase.auth.signUp({
       email: result.data.email,
       password: result.data.password,
       options: {
@@ -58,15 +55,10 @@ export default function SignupScreen() {
     });
     setLoading(false);
 
-    if (authError || !data.user) {
-      setError(authError?.message ?? tErrors('required'));
-      return;
+    if (authError) {
+      setError(authError.message);
     }
-
-    const deviceId = await getOrCreateDeviceId();
-    setDeviceId(deviceId);
-    await registerDevice(data.user.id, deviceId);
-    setUser(data.user);
+    // On success: onAuthStateChange in AuthGate fires → device registered → navigation handled
   }
 
   return (

@@ -22,10 +22,14 @@ void i18n.use(initReactI18next).init({
   compatibilityJSON: 'v3',
   lng: 'en',
   fallbackLng: 'en',
+  // Each top-level key of the shared JSON becomes its own namespace, matching
+  // the next-intl structure used on the web (useTranslations('auth') etc.).
+  ns: ['common', 'auth', 'errors'],
+  defaultNS: 'common',
   resources: {
-    en: { translation: en },
-    es: { translation: es },
-    cs: { translation: cs },
+    en: { common: en.common, auth: en.auth, errors: en.errors },
+    es: { common: es.common, auth: es.auth, errors: es.errors },
+    cs: { common: cs.common, auth: cs.auth, errors: cs.errors },
   },
   interpolation: {
     // Single-brace syntax to match next-intl. MUST NOT be changed

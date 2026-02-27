@@ -7,20 +7,18 @@ import { supabase } from '@fitsync/database';
 import { loginSchema } from '@fitsync/shared';
 import { Button } from '@fitsync/ui';
 
-import { getOrCreateDeviceId, registerDevice, useAuthStore } from '../../store/auth.store';
-
 /**
  * Mobile login screen.
  *
- * After successful sign-in: persists deviceId to store, registers the device
- * in user_devices, then updates the auth store — the AuthGate in _layout.tsx
- * detects the user change and navigates to the home screen automatically.
+ * Calls supabase.auth.signInWithPassword and handles validation errors.
+ * On success the Supabase client stores the session; the AuthGate in
+ * _layout.tsx detects the SIGNED_IN event, registers the device, and
+ * navigates to the home screen automatically.
  */
 export default function LoginScreen() {
   const { t } = useTranslation('auth');
   const { t: tErrors } = useTranslation('errors');
   const router = useRouter();
-  const { setUser, setDeviceId } = useAuthStore();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -42,21 +40,16 @@ export default function LoginScreen() {
     }
 
     setLoading(true);
-    const { data, error: authError } = await supabase.auth.signInWithPassword({
+    const { error: authError } = await supabase.auth.signInWithPassword({
       email: result.data.email,
       password: result.data.password,
     });
     setLoading(false);
 
-    if (authError || !data.user) {
-      setError(authError?.message ?? tErrors('required'));
-      return;
+    if (authError) {
+      setError(authError.message);
     }
-
-    const deviceId = await getOrCreateDeviceId();
-    setDeviceId(deviceId);
-    await registerDevice(data.user.id, deviceId);
-    setUser(data.user);
+    // On success: onAuthStateChange in AuthGate fires → device registered → navigation handled
   }
 
   return (

@@ -9,6 +9,8 @@ import { supabase } from '@fitsync/database';
 import { signupSchema, type UserRole } from '@fitsync/shared';
 import { Button } from '@fitsync/ui';
 
+type FieldErrors = Partial<Record<'full_name' | 'email' | 'password', string>>;
+
 /**
  * Signup page — client component.
  *
@@ -24,22 +26,26 @@ export default function SignupPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<UserRole>('athlete');
-  const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function handleSignUp() {
-    setError(null);
+    setFieldErrors({});
+    setSubmitError(null);
 
     const result = signupSchema.safeParse({ full_name: fullName, email, password, role });
     if (!result.success) {
-      const firstIssue = result.error.issues[0];
-      if (firstIssue?.path[0] === 'email') {
-        setError(tErrors('invalid_email'));
-      } else if (firstIssue?.path[0] === 'password') {
-        setError(tErrors('password_too_short'));
-      } else {
-        setError(tErrors('required'));
+      const errors: FieldErrors = {};
+      for (const issue of result.error.issues) {
+        const field = issue.path[0] as keyof FieldErrors;
+        if (!errors[field]) {
+          if (field === 'email') errors.email = tErrors('invalid_email');
+          else if (field === 'password') errors.password = tErrors('password_too_short');
+          else errors.full_name = tErrors('required');
+        }
       }
+      setFieldErrors(errors);
       return;
     }
 
@@ -57,7 +63,7 @@ export default function SignupPage() {
     setLoading(false);
 
     if (authError) {
-      setError(authError.message);
+      setSubmitError(authError.message);
       return;
     }
 
@@ -69,6 +75,11 @@ export default function SignupPage() {
   const [alreadyHavePrefix, alreadyHaveSuffix = ''] = t('already_have_account', {
     link: '\x00',
   }).split('\x00');
+
+  const inputClass =
+    'mt-1 block w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-1';
+  const inputValid = `${inputClass} border-gray-300 focus:border-blue-500 focus:ring-blue-500`;
+  const inputInvalid = `${inputClass} border-red-400 focus:border-red-500 focus:ring-red-500`;
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-8">
@@ -93,8 +104,11 @@ export default function SignupPage() {
               onChange={(e) => setFullName(e.target.value)}
               autoComplete="name"
               required
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className={fieldErrors.full_name ? inputInvalid : inputValid}
             />
+            {fieldErrors.full_name && (
+              <p className="mt-1 text-xs text-red-600">{fieldErrors.full_name}</p>
+            )}
           </div>
 
           <div>
@@ -108,8 +122,9 @@ export default function SignupPage() {
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
               required
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className={fieldErrors.email ? inputInvalid : inputValid}
             />
+            {fieldErrors.email && <p className="mt-1 text-xs text-red-600">{fieldErrors.email}</p>}
           </div>
 
           <div>
@@ -123,8 +138,11 @@ export default function SignupPage() {
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="new-password"
               required
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className={fieldErrors.password ? inputInvalid : inputValid}
             />
+            {fieldErrors.password && (
+              <p className="mt-1 text-xs text-red-600">{fieldErrors.password}</p>
+            )}
           </div>
 
           <div>
@@ -153,7 +171,7 @@ export default function SignupPage() {
             </div>
           </div>
 
-          {error !== null && <p className="text-sm text-red-600">{error}</p>}
+          {submitError !== null && <p className="text-sm text-red-600">{submitError}</p>}
 
           {/* Hidden submit button so pressing Enter in any input submits the form */}
           <button type="submit" className="sr-only" tabIndex={-1} aria-hidden="true" />

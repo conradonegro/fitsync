@@ -1,8 +1,10 @@
 name: Deploy Web
 
 on:
-  push:
+  workflow_run:
+    workflows: [CI]
     branches: [main]
+    types: [completed]
 
 # TODO Phase 1 T16: Complete this workflow after CI checks are fully green.
 # Requires: VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID in GitHub secrets.
@@ -16,6 +18,7 @@ jobs:
     name: Deploy to Vercel Production
     runs-on: ubuntu-latest
     environment: production
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - name: Checkout

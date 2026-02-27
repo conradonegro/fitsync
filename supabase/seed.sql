@@ -49,6 +49,16 @@ insert into auth.users (
   email_confirmed_at,
   raw_app_meta_data,
   raw_user_meta_data,
+  -- GoTrue v2 scans these columns into non-pointer Go strings.
+  -- They must be '' (empty string), not NULL, or GoTrue returns
+  -- "sql: Scan error … converting NULL to string is unsupported".
+  confirmation_token,
+  recovery_token,
+  email_change_token_new,
+  email_change,
+  email_change_token_current,
+  phone_change_token,
+  reauthentication_token,
   created_at,
   updated_at
 ) values
@@ -63,6 +73,7 @@ insert into auth.users (
     now(),
     '{"provider":"email","providers":["email"]}',
     '{"full_name":"Alex Trainer","role":"trainer"}',
+    '', '', '', '', '', '', '',
     now(),
     now()
   ),
@@ -77,6 +88,7 @@ insert into auth.users (
     now(),
     '{"provider":"email","providers":["email"]}',
     '{"full_name":"Sam Athlete","role":"athlete"}',
+    '', '', '', '', '', '', '',
     now(),
     now()
   );

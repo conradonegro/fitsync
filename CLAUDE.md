@@ -100,8 +100,10 @@ Profile (trainer or athlete)
 
 **`apps/web/.env.local`**
 
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `NEXT_PUBLIC_SUPABASE_URL` — browser client (`client.web.ts`)
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` — browser client (`client.web.ts`)
+- `SUPABASE_URL` — server client + middleware (no `NEXT_PUBLIC_` prefix)
+- `SUPABASE_ANON_KEY` — server client + middleware (no `NEXT_PUBLIC_` prefix)
 - `SENTRY_DSN`, `SENTRY_AUTH_TOKEN`
 
 **`apps/mobile/.env.local`** (build-time only, injected via `app.config.ts`)

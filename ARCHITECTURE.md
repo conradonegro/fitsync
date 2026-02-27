@@ -387,9 +387,9 @@ Erasure requests anonymize PII in place rather than hard-deleting records. This 
 
 ### ADR-018 — Historical Data Access
 
-- **Decision**: The `coach_athlete_relationships` table has a `history_shared_from timestamptz` column. At the time of accepting a trainer invitation, the athlete explicitly chooses to share all history (sets `history_shared_from` to their account creation date) or only future data (sets it to `now()`). RLS policies on athlete data include `AND events.created_at >= relationship.history_shared_from`.
+- **Decision**: The `coach_athlete_relationships` table has a `history_shared_from timestamptz` column. At the time of accepting a trainer invitation, the athlete explicitly chooses to share all history (sets `history_shared_from` to their account creation date) or only future data (sets it to `now()`). RLS policies on athlete data include `AND events.server_created_at >= relationship.history_shared_from`.
 - **Rationale**: Athletes may have logged private workout data before connecting with a trainer. Silent retrospective exposure of that data to a third party would be a GDPR violation and a trust violation. Explicit consent at connection time is the correct model.
-- **Consequences**: RLS policies are slightly more complex. The athlete onboarding/invitation acceptance flow must present this choice clearly.
+- **Consequences**: RLS policies are slightly more complex. The athlete onboarding/invitation acceptance flow must present this choice clearly. RLS on `workout_events` uses `server_created_at` (the server-assigned timestamp, not the client device clock) for the history window check — `server_created_at` is tamper-proof, whereas `client_created_at` could be spoofed to bypass the window.
 - **Status**: Approved
 
 ---
@@ -479,7 +479,7 @@ fitsync/
 │   │   ├── components/                # Web-only components (use @fitsync/ui for shared)
 │   │   ├── middleware.ts              # Supabase session refresh (required)
 │   │   ├── next.config.ts            # Includes .web.tsx resolution + Sentry
-│   │   └── .env.local                # NEXT_PUBLIC_SUPABASE_URL, ANON_KEY only
+│   │   └── .env.local                # NEXT_PUBLIC_SUPABASE_* (browser) + SUPABASE_* (server/middleware)
 │   │
 │   └── mobile/                        # Expo managed workflow (athlete-focused)
 │       ├── app/                       # Expo Router file-based routes

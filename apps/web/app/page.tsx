@@ -4,6 +4,8 @@ import { getTranslations } from 'next-intl/server';
 import { createServerClient } from '@fitsync/database/server';
 import { userRoleSchema } from '@fitsync/shared';
 
+import { signOut } from './actions/auth';
+
 /**
  * Public home page.
  * Unauthenticated users are redirected to /login by middleware.ts.
@@ -20,6 +22,7 @@ export default async function HomePage() {
   } = await supabase.auth.getUser();
 
   const t = await getTranslations('common');
+  const tAuth = await getTranslations('auth');
   const roles = userRoleSchema.options;
 
   return (
@@ -28,6 +31,14 @@ export default async function HomePage() {
       <p className="mt-4 text-lg text-gray-600">{t('loading')}</p>
       <p className="mt-2 text-sm text-gray-400">For {roles.join(' & ')}s</p>
       {user && <p className="mt-2 text-sm text-gray-400">{user.email}</p>}
+      <form action={signOut} className="mt-4">
+        <button
+          type="submit"
+          className="rounded-md bg-gray-100 px-4 py-2 text-sm text-gray-700 hover:bg-gray-200"
+        >
+          {tAuth('sign_out')}
+        </button>
+      </form>
     </main>
   );
 }

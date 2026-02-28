@@ -141,10 +141,20 @@ ATHLETE DEVICE                          SERVER
 
 ### 3.3 Authentication & Sessions
 
-- Supabase Auth issues JWTs. Sessions are managed via `@supabase/ssr` middleware in Next.js (required — see ADR-012).
-- Mobile uses `@supabase/supabase-js` with AsyncStorage/SecureStore adapter.
-- Three Supabase client contexts exist and must not be mixed (see ADR-013).
-- OAuth URL scheme is registered in `app.config.ts` at scaffold even though OAuth login is deferred.
+**JWT issuance**: Supabase Auth issues JWTs. Sessions are managed via `@supabase/ssr` middleware in Next.js (required — see ADR-012). Mobile uses `@supabase/supabase-js` with the AsyncStorage adapter for session persistence across app restarts. Three Supabase client contexts exist and must not be mixed (see ADR-013). OAuth URL scheme is registered in `app.config.ts` at scaffold even though OAuth login is deferred.
+
+**Auth state (Zustand)**:
+
+- `apps/web/store/auth.store.ts` — `{ user, isInitializing }`. Populated by `AuthStoreInitializer` (renderless component in `providers.tsx`) via `getSession()` + `onAuthStateChange`. The web does not need a client-side auth gate — `middleware.ts` handles unauthenticated redirect server-side.
+- `apps/mobile/store/auth.store.ts` — `{ user, deviceId, isInitializing }` + `signOut()` action. Populated by the `AuthGate` component.
+
+**AuthGate (mobile only)**: A component in `apps/mobile/app/_layout.tsx` that wraps the entire navigation stack. On mount it reads the existing session from AsyncStorage, subscribes to `onAuthStateChange`, and drives navigation: unauthenticated users go to `/(auth)/login`; authenticated users on an auth screen go to `/`. It also owns device registration (see below). Returns a blank view while `isInitializing` to prevent content flash.
+
+**Auth screens**: `apps/mobile/app/(auth)/` route group — `login.tsx` and `signup.tsx`. Login validates email format and non-empty password only (no min-length — let Supabase return the actual credential error). Signup validates the full `signupSchema`. Both screens only call the Supabase auth method and handle errors; the AuthGate handles all navigation via `onAuthStateChange`.
+
+**Role at signup**: `signupSchema` (in `packages/shared`) extends `loginSchema` with `full_name` and `role`. Role is passed in `signUp({ options: { data: { role, full_name } } })`. The `handle_new_user()` Postgres trigger reads `raw_user_meta_data` to create the `profiles` row. If `role` is absent the trigger raises an exception, blocking orphaned auth rows (ADR hardened in migration 009).
+
+**Device registration**: On `SIGNED_IN` and `INITIAL_SESSION` events in `onAuthStateChange`, the AuthGate calls `getOrCreateDeviceId()` (reads from `expo-secure-store`, generates a UUID v4 on first launch) then upserts into `user_devices` with `ON CONFLICT (user_id, device_id) DO UPDATE SET last_seen_at`. Device_id never changes across app restarts unless the app is reinstalled. UUID generation uses `crypto.randomUUID()` with a `Math.random` fallback for older Expo Go environments.
 
 ### 3.4 Row-Level Security Model
 
@@ -387,9 +397,9 @@ Erasure requests anonymize PII in place rather than hard-deleting records. This 
 
 ### ADR-018 — Historical Data Access
 
-- **Decision**: The `coach_athlete_relationships` table has a `history_shared_from timestamptz` column. At the time of accepting a trainer invitation, the athlete explicitly chooses to share all history (sets `history_shared_from` to their account creation date) or only future data (sets it to `now()`). RLS policies on athlete data include `AND events.created_at >= relationship.history_shared_from`.
+- **Decision**: The `coach_athlete_relationships` table has a `history_shared_from timestamptz` column. At the time of accepting a trainer invitation, the athlete explicitly chooses to share all history (sets `history_shared_from` to their account creation date) or only future data (sets it to `now()`). RLS policies on athlete data include `AND events.server_created_at >= relationship.history_shared_from`.
 - **Rationale**: Athletes may have logged private workout data before connecting with a trainer. Silent retrospective exposure of that data to a third party would be a GDPR violation and a trust violation. Explicit consent at connection time is the correct model.
-- **Consequences**: RLS policies are slightly more complex. The athlete onboarding/invitation acceptance flow must present this choice clearly.
+- **Consequences**: RLS policies are slightly more complex. The athlete onboarding/invitation acceptance flow must present this choice clearly. RLS on `workout_events` uses `server_created_at` (the server-assigned timestamp, not the client device clock) for the history window check — `server_created_at` is tamper-proof, whereas `client_created_at` could be spoofed to bypass the window.
 - **Status**: Approved
 
 ---
@@ -473,20 +483,28 @@ fitsync/
 ├── apps/
 │   ├── web/                           # Next.js App Router (trainer-focused)
 │   │   ├── app/                       # App Router pages, layouts, route handlers
-│   │   │   ├── (auth)/                # Auth routes (login, signup)
-│   │   │   ├── (dashboard)/           # Protected trainer dashboard
-│   │   │   └── api/                   # Route handlers
+│   │   │   ├── actions/               # Server Actions (auth sign-out)
+│   │   │   ├── login/                 # Login page
+│   │   │   ├── signup/                # Signup page
+│   │   │   ├── layout.tsx             # Root layout (NextIntlClientProvider, QueryProvider)
+│   │   │   ├── page.tsx               # Home / trainer dashboard placeholder
+│   │   │   └── providers.tsx          # QueryProvider + AuthStoreInitializer
 │   │   ├── components/                # Web-only components (use @fitsync/ui for shared)
+│   │   ├── store/                     # Zustand stores (auth)
 │   │   ├── middleware.ts              # Supabase session refresh (required)
 │   │   ├── next.config.ts            # Includes .web.tsx resolution + Sentry
-│   │   └── .env.local                # NEXT_PUBLIC_SUPABASE_URL, ANON_KEY only
+│   │   └── .env.local                # NEXT_PUBLIC_SUPABASE_* (browser) + SUPABASE_* (server/middleware)
 │   │
 │   └── mobile/                        # Expo managed workflow (athlete-focused)
 │       ├── app/                       # Expo Router file-based routes
-│       │   ├── (auth)/
-│       │   └── (tabs)/
+│       │   ├── (auth)/                # Auth route group (login, signup)
+│       │   │   ├── _layout.tsx        # Stack layout, headerShown: false
+│       │   │   ├── login.tsx
+│       │   │   └── signup.tsx
+│       │   ├── _layout.tsx            # Root layout: QueryProvider + AuthGate
+│       │   └── index.tsx              # Athlete home screen placeholder
 │       ├── components/                # Mobile-only components
-│       ├── store/                     # Zustand stores
+│       ├── store/                     # Zustand stores (auth + future)
 │       ├── sync/                      # Event queue, flush logic, catch-up
 │       ├── app.config.ts             # EAS config + env injection via Constants
 │       ├── eas.json                  # EAS Build profiles (development/preview/production)

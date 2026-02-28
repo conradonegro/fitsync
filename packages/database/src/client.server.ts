@@ -67,9 +67,15 @@ export const createServerClient = (cookieStore: Awaited<ReturnType<typeof cookie
       setAll: (
         cookiesToSet: Array<{ name: string; value: string; options: Record<string, unknown> }>,
       ) => {
-        cookiesToSet.forEach(({ name, value, options }) => {
-          cookieStore.set(name, value, options as unknown as ServerCookieOptions);
-        });
+        try {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            cookieStore.set(name, value, options as unknown as ServerCookieOptions);
+          });
+        } catch {
+          // Called from a Server Component — Next.js forbids cookie writes here.
+          // Safe to ignore: middleware.ts refreshes the session before Server
+          // Components render, so the updated tokens are already in the response.
+        }
       },
     },
   });

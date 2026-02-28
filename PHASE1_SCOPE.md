@@ -200,7 +200,7 @@ The following are **not** in Phase 1. Any PR introducing these is out of scope a
 - [x] Session persists across app restarts on mobile.
 - [x] `device_id` is present in `user_devices` after first mobile login.
 - [x] `device_id` does not change across app restarts.
-- [ ] Next.js `middleware.ts` refreshes expired sessions without user action (verify by shortening token expiry in local config and confirming no silent logout).
+- [x] Next.js `middleware.ts` refreshes expired sessions without user action (verify by shortening token expiry in local config and confirming no silent logout).
 
 ### AC-D4: Trainer Athlete Management
 

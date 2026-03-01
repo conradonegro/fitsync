@@ -52,10 +52,13 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
   const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/signup');
+  const isPublicRoute = isAuthRoute || pathname.startsWith('/invite');
 
-  if (!user && !isAuthRoute) {
+  if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone();
+    const redirect = encodeURIComponent(request.nextUrl.pathname + request.nextUrl.search);
     url.pathname = '/login';
+    url.searchParams.set('redirect', redirect);
     return NextResponse.redirect(url);
   }
 

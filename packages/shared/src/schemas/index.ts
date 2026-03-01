@@ -7,6 +7,7 @@
  * these schemas to match. The build will fail if they drift.
  */
 
+export { inviteAthleteSchema, type InviteAthleteInput } from './invite-athlete.schema';
 export { loginSchema, type LoginCredentials } from './login.schema';
 export { profileSchema, type Profile } from './profile.schema';
 export { signupSchema, type SignupCredentials } from './signup.schema';

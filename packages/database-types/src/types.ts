@@ -37,7 +37,7 @@ export type Database = {
       coach_athlete_relationships: {
         Row: {
           accepted_at: string | null
-          athlete_id: string
+          athlete_id: string | null
           created_at: string
           history_shared_from: string | null
           id: string
@@ -50,7 +50,7 @@ export type Database = {
         }
         Insert: {
           accepted_at?: string | null
-          athlete_id: string
+          athlete_id?: string | null
           created_at?: string
           history_shared_from?: string | null
           id?: string
@@ -63,7 +63,7 @@ export type Database = {
         }
         Update: {
           accepted_at?: string | null
-          athlete_id?: string
+          athlete_id?: string | null
           created_at?: string
           history_shared_from?: string | null
           id?: string
@@ -208,7 +208,6 @@ export type Database = {
           athlete_id: string
           client_created_at: string
           client_sequence: number
-          created_at: string
           device_id: string
           event_type: string
           id: string
@@ -220,7 +219,6 @@ export type Database = {
           athlete_id: string
           client_created_at: string
           client_sequence: number
-          created_at?: string
           device_id: string
           event_type: string
           id?: string
@@ -232,7 +230,6 @@ export type Database = {
           athlete_id?: string
           client_created_at?: string
           client_sequence?: number
-          created_at?: string
           device_id?: string
           event_type?: string
           id?: string
@@ -303,6 +300,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_invitation: {
+        Args: { p_invite_id: string; p_share_full_history: boolean }
+        Returns: undefined
+      }
+      get_pending_invite: {
+        Args: { p_invite_id: string }
+        Returns: {
+          athlete_id: string
+          id: string
+          invited_email: string
+          status: Database["public"]["Enums"]["relationship_status"]
+          trainer_id: string
+          trainer_name: string
+        }[]
+      }
       has_active_relationship: {
         Args: { p_athlete_id: string; p_trainer_id: string }
         Returns: boolean

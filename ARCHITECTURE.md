@@ -139,7 +139,32 @@ ATHLETE DEVICE                          SERVER
 
 **TanStack Query responsibilities**: Performance cache for online reads only. Never authoritative. Always considered stale on app resume.
 
-### 3.3 Authentication & Sessions
+### 3.3 Invite & Relationship Flow
+
+**Invite lifecycle**: Trainers enter an athlete's email on the web roster page (`/dashboard/athletes`). The `inviteAthlete` Server Action:
+
+1. Validates email with `inviteAthleteSchema` (Zod).
+2. Verifies the caller's profile role is `trainer`.
+3. Inserts a `coach_athlete_relationships` row with `status = 'pending'`, `athlete_id = NULL`, and `invited_email` populated.
+4. Constructs the accept URL using the `APP_URL` env var: `APP_URL + '/invite/accept?id=' + row.id`.
+5. Calls the `send-invitation` Edge Function (POST, `verify_jwt = true`) with `{ trainerName, athleteEmail, acceptUrl }`. The Edge Function calls the Resend REST API and returns the email ID.
+
+**`athlete_id` is nullable for pending invites**: Migration 010 changes `coach_athlete_relationships.athlete_id` from NOT NULL to nullable. The partial unique index `car_trainer_email_pending_idx` (WHERE `status <> 'revoked'`) prevents duplicate open invites to the same email. A separate partial unique index `car_trainer_athlete_unique_idx` (WHERE `athlete_id IS NOT NULL`) preserves the original constraint for active relationships.
+
+**Accept flow**: The accept page (`/invite/accept?id=<uuid>`) is a public route (allowlisted in middleware). The page calls `getPendingInviteDetails` Server Action, which calls the SECURITY DEFINER function `get_pending_invite(p_invite_id)`. This function verifies `invited_email = auth.email()` before returning invite details — no token in the URL, no separate RLS policy needed. Unauthenticated visitors see links to `/login?redirect=...` and `/signup?redirect=...` with the invite URL encoded as the redirect target.
+
+**SECURITY DEFINER functions**:
+
+- `get_pending_invite(p_invite_id uuid)` — returns invite + trainer name if caller's email matches `invited_email`.
+- `accept_invitation(p_invite_id uuid, p_share_full_history boolean)` — atomically validates (pending, athlete caller, email match) then writes `athlete_id`, `status = 'active'`, `history_shared_from` (`profiles.created_at` for full history, `now()` for future-only), and `accepted_at`.
+
+**`APP_URL` env var** (`apps/web/.env.local`): Used by Server Actions to build the invite accept URL. Set to `http://localhost:3000` locally, Vercel URL in production.
+
+**`RESEND_API_KEY`**: A Supabase Edge Function secret — not a Next.js env var. Set with `supabase secrets set RESEND_API_KEY=<key>` for staging/production. For local dev, use `supabase functions serve` after setting the secret; emails can be skipped locally by inspecting Supabase Studio logs.
+
+**Server Component cookie constraint**: `packages/database/src/client.server.ts` wraps `cookieStore.set` in a try/catch. Server Components cannot write cookies — this is expected and safe because `middleware.ts` already refreshed the session tokens in the response before any Server Component renders.
+
+### 3.4 Authentication & Sessions
 
 **JWT issuance**: Supabase Auth issues JWTs. Sessions are managed via `@supabase/ssr` middleware in Next.js (required — see ADR-012). Mobile uses `@supabase/supabase-js` with the AsyncStorage adapter for session persistence across app restarts. Three Supabase client contexts exist and must not be mixed (see ADR-013). OAuth URL scheme is registered in `app.config.ts` at scaffold even though OAuth login is deferred.
 
@@ -156,7 +181,7 @@ ATHLETE DEVICE                          SERVER
 
 **Device registration**: On `SIGNED_IN` and `INITIAL_SESSION` events in `onAuthStateChange`, the AuthGate calls `getOrCreateDeviceId()` (reads from `expo-secure-store`, generates a UUID v4 on first launch) then upserts into `user_devices` with `ON CONFLICT (user_id, device_id) DO UPDATE SET last_seen_at`. Device_id never changes across app restarts unless the app is reinstalled. UUID generation uses `crypto.randomUUID()` with a `Math.random` fallback for older Expo Go environments.
 
-### 3.4 Row-Level Security Model
+### 3.5 Row-Level Security Model
 
 RLS is the security boundary for all data access. Policies follow this logic:
 
@@ -170,7 +195,7 @@ RLS is the security boundary for all data access. Policies follow this logic:
 
 RLS policies use security-definer functions for coach-athlete relationship lookups to avoid per-row subquery overhead.
 
-### 3.5 Internationalization
+### 3.6 Internationalization
 
 - **Web**: `next-intl` (App Router compatible, Server Component support).
 - **Mobile**: `react-i18next`.
@@ -178,7 +203,7 @@ RLS policies use security-definer functions for coach-athlete relationship looku
 - **Interpolation**: Both libraries configured to use single-brace `{variable}` syntax.
 - **Languages at launch**: English, Spanish, Czech.
 
-### 3.6 Edge Functions
+### 3.7 Edge Functions
 
 Edge Functions are intentionally thin. They never import from `packages/shared` (Deno runtime incompatibility). Their only roles are:
 
@@ -188,7 +213,7 @@ Edge Functions are intentionally thin. They never import from `packages/shared` 
 
 All business logic stays in Postgres functions, RLS policies, and the client-side shared package.
 
-### 3.7 Testing Strategy
+### 3.8 Testing Strategy
 
 | Layer              | Tool                                 | Scope                                                    |
 | ------------------ | ------------------------------------ | -------------------------------------------------------- |
@@ -203,7 +228,7 @@ All business logic stays in Postgres functions, RLS policies, and the client-sid
 - Merge to `develop`: EAS preview build.
 - Merge to `main`: EAS production build + Vercel production deploy.
 
-### 3.8 GDPR Compliance
+### 3.9 GDPR Compliance
 
 Erasure requests anonymize PII in place rather than hard-deleting records. This preserves event log integrity for aggregate analytics while satisfying GDPR Article 17. A `pending_deletion` flag on the profile triggers a 30-day grace period before a scheduled job performs anonymization. Text fields become `[deleted]`, foreign key references are preserved for structural integrity.
 
@@ -483,11 +508,20 @@ fitsync/
 ├── apps/
 │   ├── web/                           # Next.js App Router (trainer-focused)
 │   │   ├── app/                       # App Router pages, layouts, route handlers
-│   │   │   ├── actions/               # Server Actions (auth sign-out)
+│   │   │   ├── actions/               # Server Actions (auth, relationships)
+│   │   │   ├── dashboard/             # Trainer-only area (layout guards role)
+│   │   │   │   ├── layout.tsx         # Trainer role guard + sidebar nav
+│   │   │   │   ├── page.tsx           # Redirects to /dashboard/athletes
+│   │   │   │   └── athletes/          # Roster + invite + athlete detail
+│   │   │   │       ├── page.tsx       # Roster list + InviteAthleteForm
+│   │   │   │       ├── invite-athlete-form.tsx  # Client Component (useActionState)
+│   │   │   │       └── [id]/page.tsx  # Athlete detail (name, status, history placeholder)
+│   │   │   ├── invite/accept/         # Public invite accept page (unauthenticated allowed)
+│   │   │   │   └── page.tsx           # Client Component (useSearchParams + Suspense)
 │   │   │   ├── login/                 # Login page
 │   │   │   ├── signup/                # Signup page
 │   │   │   ├── layout.tsx             # Root layout (NextIntlClientProvider, QueryProvider)
-│   │   │   ├── page.tsx               # Home / trainer dashboard placeholder
+│   │   │   ├── page.tsx               # Home: redirect trainers to dashboard, athletes to mobile message
 │   │   │   └── providers.tsx          # QueryProvider + AuthStoreInitializer
 │   │   ├── components/                # Web-only components (use @fitsync/ui for shared)
 │   │   ├── store/                     # Zustand stores (auth)

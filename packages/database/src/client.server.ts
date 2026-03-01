@@ -11,6 +11,7 @@
  */
 
 import { createServerClient as createSupabaseServerClient } from '@supabase/ssr';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type { cookies } from 'next/headers';
 
 import type { Database } from '@fitsync/database-types';
@@ -44,7 +45,19 @@ type ServerCookieOptions = {
  * const supabase = createServerClient(cookieStore);
  * ```
  */
-export const createServerClient = (cookieStore: Awaited<ReturnType<typeof cookies>>) => {
+/**
+ * @supabase/ssr@0.5.2 returns SupabaseClient<Database, SchemaName, Schema> with 3
+ * explicit type args. supabase-js@2.97.0 expanded SupabaseClient to 5 type params,
+ * so the 3-arg instantiation misaligns — the 3rd arg (Schema) lands in the position
+ * for SchemaName (a string), making TypeScript infer Schema = never for all queries.
+ *
+ * Annotating the return type as SupabaseClient<Database> lets TypeScript apply the
+ * correct 5-param defaults (SchemaName='public', Schema=Database['public'], etc.).
+ * The cast is safe: the runtime client is functionally identical.
+ */
+export const createServerClient = (
+  cookieStore: Awaited<ReturnType<typeof cookies>>,
+): SupabaseClient<Database> => {
   const supabaseUrl = process.env['SUPABASE_URL'];
   const supabaseAnonKey = process.env['SUPABASE_ANON_KEY'];
 
@@ -78,5 +91,5 @@ export const createServerClient = (cookieStore: Awaited<ReturnType<typeof cookie
         }
       },
     },
-  });
+  }) as unknown as SupabaseClient<Database>;
 };

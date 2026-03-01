@@ -204,12 +204,12 @@ The following are **not** in Phase 1. Any PR introducing these is out of scope a
 
 ### AC-D4: Trainer Athlete Management
 
-- [ ] Trainer can see their athlete roster (empty state handled).
-- [ ] Trainer can enter an athlete's email and trigger an invitation.
+- [x] Trainer can see their athlete roster (empty state handled).
+- [x] Trainer can enter an athlete's email and trigger an invitation.
 - [ ] Resend delivers the invitation email (verify in Resend dashboard).
-- [ ] Athlete can click the link, sign up, and see the invitation with history sharing choice.
-- [ ] After acceptance, the relationship appears as `active` in the trainer's roster.
-- [ ] Athlete's history choice is correctly reflected in `history_shared_from` column.
+- [x] Athlete can click the link, sign up, and see the invitation with history sharing choice.
+- [x] After acceptance, the relationship appears as `active` in the trainer's roster.
+- [x] Athlete's history choice is correctly reflected in `history_shared_from` column.
 
 ### AC-D5: Offline Workout Logging
 

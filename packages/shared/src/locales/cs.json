@@ -30,5 +30,31 @@
     "required": "Toto pole je povinné",
     "invalid_email": "Zadejte platnou e-mailovou adresu",
     "password_too_short": "Heslo musí mít alespoň 8 znaků"
+  },
+  "roster": {
+    "page_title": "Athletes",
+    "empty_state": "No athletes yet. Invite one below.",
+    "invite_title": "Invite an athlete",
+    "invite_email_label": "Athlete's email address",
+    "invite_email_placeholder": "athlete@example.com",
+    "invite_button": "Send invitation",
+    "invite_success": "Invitation sent to {email}",
+    "invite_no_athlete": "No athlete found with this email",
+    "status_pending": "Pending",
+    "status_active": "Active",
+    "accept_title": "Accept invitation",
+    "accept_subtitle": "{trainerName} has invited you to connect on FitSync.",
+    "accept_history_title": "History sharing",
+    "accept_history_all": "Share my full workout history with this trainer",
+    "accept_history_from_now": "Share only workouts from today onwards",
+    "accept_button": "Accept invitation",
+    "accept_login_prompt": "Sign in or create an account to accept this invitation.",
+    "accept_not_found": "This invitation was not found or has expired.",
+    "accept_already_accepted": "This invitation has already been accepted.",
+    "accept_email_mismatch": "This invitation was sent to a different email address.",
+    "accept_caller_not_athlete": "Only athlete accounts can accept invitations.",
+    "athlete_detail_title": "Athlete details",
+    "connection_date": "Connected on {date}",
+    "history_placeholder": "Workout history will appear here after the athlete syncs."
   }
 }

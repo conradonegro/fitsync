@@ -5,6 +5,7 @@ import { getLocale, getMessages } from 'next-intl/server';
 import React from 'react';
 
 import './globals.css';
+import { LocaleSwitcher } from './components/locale-switcher';
 import { QueryProvider } from './providers';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -28,7 +29,12 @@ export default async function RootLayout({ children }: { readonly children: Reac
     <html lang={locale}>
       <body className={inter.className}>
         <NextIntlClientProvider messages={messages}>
-          <QueryProvider>{children}</QueryProvider>
+          <QueryProvider>
+            <div className="fixed right-3 top-3 z-50">
+              <LocaleSwitcher />
+            </div>
+            {children}
+          </QueryProvider>
         </NextIntlClientProvider>
       </body>
     </html>

@@ -57,7 +57,7 @@ enabled = true
 [auth]
 enabled = true
 # Next.js dev server.
-site_url = "http://127.0.0.1:3000"
+site_url = "http://localhost:3000"
 # Allow redirects back to the web app and mobile app (fitsync:// scheme for OAuth, deferred to Phase 2).
 additional_redirect_urls = [
   "http://localhost:3000",
@@ -65,7 +65,7 @@ additional_redirect_urls = [
 ]
 jwt_expiry = 3600
 enable_refresh_token_rotation = true
-refresh_token_reuse_interval = 10
+refresh_token_reuse_interval = 60
 enable_signup = true
 enable_anonymous_sign_ins = false
 
@@ -81,3 +81,6 @@ max_frequency = "1s"
 [auth.sms]
 enable_signup = false
 enable_confirmations = false
+
+[functions.send-invitation]
+verify_jwt = true

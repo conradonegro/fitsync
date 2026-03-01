@@ -104,7 +104,12 @@ Profile (trainer or athlete)
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY` — browser client (`client.web.ts`)
 - `SUPABASE_URL` — server client + middleware (no `NEXT_PUBLIC_` prefix)
 - `SUPABASE_ANON_KEY` — server client + middleware (no `NEXT_PUBLIC_` prefix)
+- `APP_URL` — base URL for invite accept links (e.g., `http://localhost:3000`). Used in Server Actions.
 - `SENTRY_DSN`, `SENTRY_AUTH_TOKEN`
+
+**Supabase Edge Function secrets** (not Next.js env vars — set via CLI):
+
+- `RESEND_API_KEY` — Resend API key for email delivery. Set with `supabase secrets set RESEND_API_KEY=<key>`. For local dev, run `supabase functions serve` after setting the secret. Email delivery is non-fatal if missing.
 
 **`apps/mobile/.env.local`** (build-time only, injected via `app.config.ts`)
 

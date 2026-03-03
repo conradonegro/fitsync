@@ -175,7 +175,7 @@ export default function SignupScreen() {
           />
         </View>
 
-        <TouchableOpacity onPress={() => router.push('/(auth)/login')} className="mt-4">
+        <TouchableOpacity onPress={() => router.replace('/(auth)/login')} className="mt-4">
           <Text className="text-center text-sm text-gray-600">
             {t('already_have_account', { link: t('sign_in') })}
           </Text>

@@ -137,6 +137,8 @@ ATHLETE DEVICE                          SERVER
 
 **SQLite responsibilities**: Source of truth for offline reads, event write queue, persisted `last_server_timestamp` for catch-up. Never used for secrets.
 
+**D5 implements steps 1–3** (local write path): action → SQLite `event_queue` insert → optimistic Zustand UI update. The local schema lives in `apps/mobile/db/` (client, schema, event-queue, sessions). **D6 will implement steps 4–9** (flush/catch-up path) without touching D5 files — `event_queue.synced_at` is the handoff column.
+
 **TanStack Query responsibilities**: Performance cache for online reads only. Never authoritative. Always considered stale on app resume.
 
 ### 3.3 Invite & Relationship Flow
@@ -242,7 +244,7 @@ Erasure requests anonymize PII in place rather than hard-deleting records. This 
 | Mobile App     | Expo (managed workflow) + React Native  | Cross-platform, managed build pipeline via EAS, compatible with target native modules |
 | Shared UI      | `packages/ui` with platform-split files | Single package, one API, Metro/Next.js resolve correct implementation automatically   |
 | Web Styling    | TailwindCSS                             | Utility-first, zero runtime, excellent with App Router                                |
-| Mobile Styling | NativeWind v4                           | Tailwind syntax for React Native, built on New Architecture                           |
+| Mobile Styling | NativeWind v5 (preview)                 | Tailwind v4 syntax for React Native, built on New Architecture + react-native-css     |
 | Server State   | TanStack Query v5                       | Best-in-class async data caching, optimistic updates, hydration support               |
 | Client State   | Zustand                                 | Minimal boilerplate, works identically on web and native, no Redux overhead           |
 | Backend        | Supabase                                | Postgres + RLS + Auth + Realtime + Edge Functions in one platform                     |
@@ -330,9 +332,9 @@ Erasure requests anonymize PII in place rather than hard-deleting records. This 
 
 ### ADR-008 — Styling
 
-- **Decision**: TailwindCSS for web (Next.js). NativeWind v4 for mobile (Expo). NativeWind v4 requires Expo SDK 50+ and React Native New Architecture.
+- **Decision**: TailwindCSS v3 for web (Next.js). NativeWind v5 (preview) + Tailwind v4 for mobile (Expo SDK 54 + RN 0.81 + React 19). NativeWind v5 requires New Architecture; CSS is configured via `postcss.config.mjs` and `@tailwindcss/postcss`. The `nativewind-env.d.ts` references `react-native-css/types` (not `nativewind/types` which no longer ships in v5).
 - **Rationale**: Tailwind is the standard for Next.js. NativeWind brings the same utility-class API to React Native. Unified mental model across platforms without a shared runtime.
-- **Consequences**: Every native module added to the Expo app must be verified for New Architecture compatibility before installation. NativeWind v4 cannot be downgraded to Old Architecture without switching to NativeWind v2.
+- **Consequences**: Every native module added to the Expo app must be verified for New Architecture compatibility before installation. NativeWind v5 (preview) cannot be downgraded without reverting to NativeWind v4 and Tailwind v3.
 - **Status**: Approved
 
 ---
@@ -535,11 +537,22 @@ fitsync/
 │       │   │   ├── _layout.tsx        # Stack layout, headerShown: false
 │       │   │   ├── login.tsx
 │       │   │   └── signup.tsx
-│       │   ├── _layout.tsx            # Root layout: QueryProvider + AuthGate
-│       │   └── index.tsx              # Athlete home screen placeholder
+│       │   ├── workout/               # Workout route group
+│       │   │   ├── _layout.tsx        # Stack layout, headerShown: false
+│       │   │   └── active.tsx         # Active workout: set-logging form + FlatList
+│       │   ├── _layout.tsx            # Root layout: QueryProvider + AuthGate + network monitor
+│       │   └── index.tsx              # Athlete home screen (Start/Resume + pending badge)
 │       ├── components/                # Mobile-only components
-│       ├── store/                     # Zustand stores (auth + future)
-│       ├── sync/                      # Event queue, flush logic, catch-up
+│       │   └── OfflineIndicator.tsx   # Yellow banner when isOnline = false
+│       ├── db/                        # SQLite layer (D5 local write path)
+│       │   ├── client.ts              # Lazy singleton getDb()
+│       │   ├── schema.ts              # DDL: local_sessions + event_queue (WAL mode)
+│       │   ├── event-queue.ts         # insertEvent, getNextSequence, getPendingEventCount
+│       │   └── sessions.ts            # insertLocalSession, endLocalSession, getActiveLocalSession
+│       ├── store/                     # Zustand stores
+│       │   ├── auth.store.ts          # { user, deviceId, isInitializing }
+│       │   └── workout.store.ts       # { activeSessionId, loggedSets, isOnline, pendingEventCount }
+│       ├── sync/                      # Event flush logic, catch-up (D6)
 │       ├── app.config.ts             # EAS config + env injection via Constants
 │       ├── eas.json                  # EAS Build profiles (development/preview/production)
 │       ├── metro.config.js           # NativeWind + monorepo watchFolders

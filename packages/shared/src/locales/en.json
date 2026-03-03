@@ -56,5 +56,22 @@
     "athlete_detail_title": "Athlete details",
     "connection_date": "Connected on {date}",
     "history_placeholder": "Workout history will appear here after the athlete syncs."
+  },
+  "workout": {
+    "start_workout": "Start Workout",
+    "resume_workout": "Resume Workout",
+    "active_workout": "Active Workout",
+    "exercise_name": "Exercise",
+    "exercise_name_placeholder": "e.g. Bench Press",
+    "reps": "Reps",
+    "weight_kg": "Weight (kg)",
+    "set_number": "Set {number}",
+    "add_set": "Log Set",
+    "finish_workout": "Finish Workout",
+    "offline_warning": "You are offline. Sets are saved locally.",
+    "no_active_session": "No active workout session.",
+    "go_back": "Go back",
+    "pending_events": "{count} set(s) pending sync",
+    "started_at": "Started {time}"
   }
 }

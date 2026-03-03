@@ -1,6 +1,6 @@
 // Learn more: https://docs.expo.dev/guides/monorepos/
 const { getDefaultConfig } = require('expo/metro-config');
-const { withNativeWind } = require('nativewind/metro');
+const { withNativewind } = require('nativewind/metro');
 const path = require('path');
 
 const projectRoot = __dirname;
@@ -30,10 +30,7 @@ config.resolver.disableHierarchicalLookup = false;
 // Without this Metro ignores the "exports" field and falls back to "main".
 config.resolver.unstable_enablePackageExports = true;
 
-// --- NativeWind v4 configuration ---
-// withNativeWind enables Tailwind CSS support in React Native.
-// cssPath points to the global CSS file with @tailwind directives.
-module.exports = withNativeWind(config, {
-  input: './global.css',
-  inlineRem: 16,
-});
+// --- NativeWind v5 configuration ---
+// withNativewind enables Tailwind CSS support in React Native.
+// v5 discovers CSS via postcss.config.mjs — no explicit cssPath needed.
+module.exports = withNativewind(config);

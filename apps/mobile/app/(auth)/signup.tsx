@@ -1,7 +1,15 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 import { supabase } from '@fitsync/database';
 import { signupSchema, type UserRole } from '@fitsync/shared';
@@ -72,10 +80,22 @@ export default function SignupScreen() {
   const inputInvalid = `${inputBase} border-red-400`;
 
   return (
-    <View className="flex-1 items-center justify-center bg-white p-8">
-      <View className="w-full max-w-sm">
-        <Text className="mb-6 text-2xl font-bold text-gray-900">{t('sign_up')}</Text>
+    <KeyboardAvoidingView
+      className="flex-1 bg-white"
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      {/* Dark hero header — matches app-wide style */}
+      <View className="bg-slate-900 px-6 pb-10 pt-16">
+        <Text className="text-3xl font-bold tracking-tight text-white">FitSync</Text>
+        <Text className="mt-1 text-sm text-slate-400">{t('sign_up')}</Text>
+      </View>
 
+      {/* Form — scrollable so keyboard doesn't obscure fields */}
+      <ScrollView
+        className="flex-1"
+        contentContainerClassName="px-8 py-8"
+        keyboardShouldPersistTaps="handled"
+      >
         <View className="space-y-4">
           <View>
             <Text className="mb-1 text-sm font-medium text-gray-700">{t('full_name')}</Text>
@@ -86,7 +106,7 @@ export default function SignupScreen() {
               autoComplete="name"
               className={fieldErrors.full_name ? inputInvalid : inputValid}
             />
-            {fieldErrors.full_name && (
+            {fieldErrors.full_name !== undefined && (
               <Text className="mt-1 text-xs text-red-600">{fieldErrors.full_name}</Text>
             )}
           </View>
@@ -101,7 +121,7 @@ export default function SignupScreen() {
               autoComplete="email"
               className={fieldErrors.email ? inputInvalid : inputValid}
             />
-            {fieldErrors.email && (
+            {fieldErrors.email !== undefined && (
               <Text className="mt-1 text-xs text-red-600">{fieldErrors.email}</Text>
             )}
           </View>
@@ -115,7 +135,7 @@ export default function SignupScreen() {
               autoComplete="new-password"
               className={fieldErrors.password ? inputInvalid : inputValid}
             />
-            {fieldErrors.password && (
+            {fieldErrors.password !== undefined && (
               <Text className="mt-1 text-xs text-red-600">{fieldErrors.password}</Text>
             )}
           </View>
@@ -155,12 +175,12 @@ export default function SignupScreen() {
           />
         </View>
 
-        <TouchableOpacity onPress={() => router.push('/(auth)/login')} className="mt-4">
+        <TouchableOpacity onPress={() => router.replace('/(auth)/login')} className="mt-4">
           <Text className="text-center text-sm text-gray-600">
             {t('already_have_account', { link: t('sign_in') })}
           </Text>
         </TouchableOpacity>
-      </View>
-    </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }

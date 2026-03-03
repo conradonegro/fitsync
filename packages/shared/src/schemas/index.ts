@@ -12,3 +12,10 @@ export { loginSchema, type LoginCredentials } from './login.schema';
 export { profileSchema, type Profile } from './profile.schema';
 export { signupSchema, type SignupCredentials } from './signup.schema';
 export { userRoleSchema, type UserRole } from './user-role.schema';
+export { startSessionSchema, type StartSessionInput } from './workout-session.schema';
+export {
+  logSetInputSchema,
+  setLoggedPayloadSchema,
+  type LogSetInput,
+  type SetLoggedPayload,
+} from './workout-event.schema';

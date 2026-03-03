@@ -56,5 +56,22 @@
     "athlete_detail_title": "Athlete details",
     "connection_date": "Connected on {date}",
     "history_placeholder": "Workout history will appear here after the athlete syncs."
+  },
+  "workout": {
+    "start_workout": "Iniciar entrenamiento",
+    "resume_workout": "Reanudar entrenamiento",
+    "active_workout": "Entrenamiento activo",
+    "exercise_name": "Ejercicio",
+    "exercise_name_placeholder": "ej. Press de banca",
+    "reps": "Repeticiones",
+    "weight_kg": "Peso (kg)",
+    "set_number": "Serie {number}",
+    "add_set": "Registrar serie",
+    "finish_workout": "Finalizar entrenamiento",
+    "offline_warning": "Estás sin conexión. Las series se guardan localmente.",
+    "no_active_session": "No hay sesión de entrenamiento activa.",
+    "go_back": "Volver",
+    "pending_events": "{count} serie(s) pendientes de sincronización",
+    "started_at": "Iniciado {time}"
   }
 }

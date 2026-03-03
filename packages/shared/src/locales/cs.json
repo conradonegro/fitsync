@@ -56,5 +56,22 @@
     "athlete_detail_title": "Athlete details",
     "connection_date": "Connected on {date}",
     "history_placeholder": "Workout history will appear here after the athlete syncs."
+  },
+  "workout": {
+    "start_workout": "Zahájit trénink",
+    "resume_workout": "Pokračovat v tréninku",
+    "active_workout": "Aktivní trénink",
+    "exercise_name": "Cvičení",
+    "exercise_name_placeholder": "např. Bench press",
+    "reps": "Opakování",
+    "weight_kg": "Váha (kg)",
+    "set_number": "Série {number}",
+    "add_set": "Zaznamenat sérii",
+    "finish_workout": "Ukončit trénink",
+    "offline_warning": "Jste offline. Série jsou uloženy lokálně.",
+    "no_active_session": "Žádná aktivní tréninková relace.",
+    "go_back": "Zpět",
+    "pending_events": "{count} série čekají na synchronizaci",
+    "started_at": "Zahájeno {time}"
   }
 }

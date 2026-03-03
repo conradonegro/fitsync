@@ -3,15 +3,17 @@ import '../global.css';
 import * as Sentry from '@sentry/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Constants from 'expo-constants';
+import * as Network from 'expo-network';
 import { useRouter, useSegments, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { View } from 'react-native';
+import { AppState, View } from 'react-native';
 
 import { supabase } from '@fitsync/database';
 
 import '../i18n';
 import { getOrCreateDeviceId, registerDevice, useAuthStore } from '../store/auth.store';
+import { useWorkoutStore } from '../store/workout.store';
 
 /**
  * Sentry must be initialized before any app code runs.
@@ -67,10 +69,17 @@ function AuthGate({ children }: { children: React.ReactNode }) {
             const deviceId = await getOrCreateDeviceId();
             if (__DEV__) console.log('[AuthGate] Device ID:', deviceId);
             setDeviceId(deviceId);
-            await registerDevice(userId, deviceId);
-            if (__DEV__) console.log('[AuthGate] Device registered successfully');
+            try {
+              await registerDevice(userId, deviceId);
+              if (__DEV__) console.log('[AuthGate] Device registered successfully');
+            } catch (err) {
+              if (__DEV__) console.error('[AuthGate] registerDevice threw (non-fatal):', err);
+            }
+            // Always rehydrate — must run even when registerDevice fails (e.g. offline / wrong URL)
+            await useWorkoutStore.getState().rehydrateFromDb();
+            if (__DEV__) console.log('[AuthGate] Workout store rehydrated');
           } catch (err) {
-            if (__DEV__) console.error('[AuthGate] Device registration threw:', err);
+            if (__DEV__) console.error('[AuthGate] Auth setup threw:', err);
           }
         })();
       }
@@ -115,12 +124,28 @@ export default function RootLayout() {
       }),
   );
 
+  // Network monitoring: check on mount and whenever the app comes to foreground.
+  // Uses getState() pattern (not hook) to avoid re-rendering RootLayout on
+  // every network state change.
+  useEffect(() => {
+    const checkNetwork = async () => {
+      const state = await Network.getNetworkStateAsync();
+      useWorkoutStore.getState().setIsOnline(state.isConnected === true);
+    };
+    void checkNetwork();
+    const sub = AppState.addEventListener('change', (next) => {
+      if (next === 'active') void checkNetwork();
+    });
+    return () => sub.remove();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthGate>
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="index" />
           <Stack.Screen name="(auth)" />
+          <Stack.Screen name="workout" />
         </Stack>
         <StatusBar style="auto" />
       </AuthGate>

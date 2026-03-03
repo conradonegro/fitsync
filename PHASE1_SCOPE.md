@@ -93,20 +93,22 @@ Includes:
 - **Invitation accept flow**: athlete visits link → signs up or logs in → relationship created with `history_shared_from` choice presented clearly.
 - **Athlete detail page**: shows athlete name, connection date, and placeholder for workout history (populated in D6).
 
-### D5 — Mobile: Offline-First Workout Logging
+### D5 — Mobile: Offline-First Workout Logging ✓ implemented
 
 The athlete's core in-gym logging flow, fully functional offline.
 
 Includes:
 
-- Athlete home screen showing today's date and a "Start Workout" entry point.
-- **Session creation**: tapping "Start Workout" creates a `workout_session` record locally in SQLite.
-- **Exercise logging**: athlete can add exercises by name (free text for Phase 1, no exercise library yet), log sets with reps and weight.
-- **Each log action** writes an append-only `workout_event` to the SQLite queue with `(device_id, client_sequence)`.
-- **Optimistic UI**: logged sets appear immediately regardless of connectivity.
-- **Session end**: athlete taps "Finish Workout", `ended_at` is written.
-- **Offline indicator**: visible UI state showing online/offline status.
-- Full flow works with airplane mode enabled.
+- Athlete home screen showing today's date and a "Start Workout" entry point. Pending sync badge when unsynced events exist.
+- **Session creation**: tapping "Start Workout" creates a `local_sessions` row and a `session_start` event in the SQLite `event_queue` (wrapped in a transaction for crash safety).
+- **Exercise logging**: athlete can add exercises by name (free text for Phase 1, no exercise library yet), log sets with reps and weight. Validated via `logSetInputSchema` (Zod).
+- **Each log action** writes an append-only `set_logged` event to the SQLite `event_queue` with `(device_id, client_sequence)`.
+- **Optimistic UI**: logged sets appear immediately (Zustand push after DB write confirms).
+- **Session end**: athlete taps "Finish Workout" → confirm dialog → `session_end` event written + `ended_at` set (wrapped in transaction).
+- **Crash recovery**: `rehydrateFromDb()` called on SIGNED_IN/INITIAL_SESSION restores an interrupted session so the athlete sees "Resume Workout".
+- **Offline indicator**: yellow banner via `OfflineIndicator` component; network state managed by `expo-network` + `AppState` listener in `RootLayout`.
+- **D6 handoff**: `event_queue.synced_at IS NULL` is the flush filter; D6 adds the flush engine without touching D5 files.
+- Full flow works with airplane mode enabled (verify on physical device — see AC-D5).
 
 ### D6 — Sync Engine
 
@@ -213,11 +215,11 @@ The following are **not** in Phase 1. Any PR introducing these is out of scope a
 
 ### AC-D5: Offline Workout Logging
 
-- [ ] Athlete can start a workout session with airplane mode enabled.
-- [ ] Athlete can log sets (exercise name, reps, weight) with no network connection.
-- [ ] Logged sets appear immediately in the UI (optimistic update).
-- [ ] Athlete can end the session with airplane mode enabled.
-- [ ] Offline indicator is visible when no network connection is present.
+- [ ] Athlete can start a workout session with airplane mode enabled. _(verify on physical device)_
+- [ ] Athlete can log sets (exercise name, reps, weight) with no network connection. _(verify on physical device)_
+- [ ] Logged sets appear immediately in the UI (optimistic update). _(verify on physical device)_
+- [ ] Athlete can end the session with airplane mode enabled. _(verify on physical device)_
+- [ ] Offline indicator is visible when no network connection is present. _(verify on physical device — expo-network returns isConnected=true in simulators)_
 - [ ] SQLite contains the queued events after offline logging (verify via Expo dev tools or debug screen).
 
 ### AC-D6: Sync Engine

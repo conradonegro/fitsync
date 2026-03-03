@@ -81,7 +81,7 @@ Profile (trainer or athlete)
 | Layer   | Technology                                                                           |
 | ------- | ------------------------------------------------------------------------------------ |
 | Web     | Next.js 15, TailwindCSS, next-intl                                                   |
-| Mobile  | Expo 52 (managed), React Native 0.76, NativeWind v4, Expo Router                     |
+| Mobile  | Expo 54 (managed), React Native 0.81, NativeWind v5 (preview), Expo Router v6        |
 | Backend | Supabase (Postgres + RLS + Auth + Realtime + Edge Functions)                         |
 | State   | TanStack Query v5, Zustand v5                                                        |
 | Offline | expo-sqlite (event queue), expo-secure-store (device_id + tokens)                    |

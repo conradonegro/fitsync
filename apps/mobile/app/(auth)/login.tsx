@@ -52,10 +52,15 @@ export default function LoginScreen() {
   }
 
   return (
-    <View className="flex-1 items-center justify-center bg-white p-8">
-      <View className="w-full max-w-sm">
-        <Text className="mb-6 text-2xl font-bold text-gray-900">{t('sign_in')}</Text>
+    <View className="flex-1 bg-white">
+      {/* Dark hero header — matches app-wide style */}
+      <View className="bg-slate-900 px-6 pb-10 pt-16">
+        <Text className="text-3xl font-bold tracking-tight text-white">FitSync</Text>
+        <Text className="mt-1 text-sm text-slate-400">{t('sign_in')}</Text>
+      </View>
 
+      {/* Form */}
+      <View className="flex-1 justify-center px-8">
         <View className="space-y-4">
           <View>
             <Text className="mb-1 text-sm font-medium text-gray-700">{t('email')}</Text>

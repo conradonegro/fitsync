@@ -33,15 +33,21 @@ export default function ActiveWorkoutScreen() {
 
   if (activeSessionId === null) {
     return (
-      <View className="flex-1 items-center justify-center bg-white p-6">
-        <Text className="mb-6 text-base text-gray-600">{t('no_active_session')}</Text>
-        <Button
-          label={t('go_back')}
-          onPress={() => {
-            router.replace('/');
-          }}
-          variant="secondary"
-        />
+      <View className="flex-1 bg-white">
+        <View className="bg-slate-900 px-6 pb-10 pt-16">
+          <Text className="text-3xl font-bold tracking-tight text-white">FitSync</Text>
+          <Text className="mt-1 text-sm text-slate-400">{t('active_workout')}</Text>
+        </View>
+        <View className="flex-1 items-center justify-center p-6">
+          <Text className="mb-6 text-base text-gray-600">{t('no_active_session')}</Text>
+          <Button
+            label={t('go_back')}
+            onPress={() => {
+              router.replace('/');
+            }}
+            variant="secondary"
+          />
+        </View>
       </View>
     );
   }
@@ -108,14 +114,24 @@ export default function ActiveWorkoutScreen() {
       className="flex-1 bg-white"
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
+      {/* Dark hero header — matches home screen */}
+      <View className="bg-slate-900 px-6 pb-8 pt-16">
+        <Text className="text-3xl font-bold tracking-tight text-white">FitSync</Text>
+        <Text className="mt-1 text-sm text-slate-400">{t('active_workout')}</Text>
+        {loggedSets.length > 0 && (
+          <Text className="mt-0.5 text-xs text-slate-500">
+            {loggedSets.length} {loggedSets.length === 1 ? 'set' : 'sets'} logged
+          </Text>
+        )}
+      </View>
+
       <OfflineIndicator />
 
-      <View className="flex-1 px-6 pt-12">
-        <Text className="mb-6 text-2xl font-bold text-gray-900">{t('active_workout')}</Text>
-
+      {/* Content */}
+      <View className="flex-1 px-6 pt-6">
         {/* Set entry form */}
-        <View className="mb-4 space-y-3">
-          <View>
+        <View className="mb-4">
+          <View className="mb-3">
             <Text className="mb-1 text-sm font-medium text-gray-700">{t('exercise_name')}</Text>
             <TextInput
               value={exerciseName}
@@ -126,7 +142,7 @@ export default function ActiveWorkoutScreen() {
             />
           </View>
 
-          <View className="flex-row gap-3">
+          <View className="mb-3 flex-row gap-3">
             <View className="flex-1">
               <Text className="mb-1 text-sm font-medium text-gray-700">{t('reps')}</Text>
               <TextInput
@@ -150,7 +166,7 @@ export default function ActiveWorkoutScreen() {
             </View>
           </View>
 
-          {fieldError !== null && <Text className="text-sm text-red-600">{fieldError}</Text>}
+          {fieldError !== null && <Text className="mb-2 text-sm text-red-600">{fieldError}</Text>}
 
           <Button
             label={t('add_set')}

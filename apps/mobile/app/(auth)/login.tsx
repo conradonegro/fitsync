@@ -65,6 +65,7 @@ export default function LoginScreen() {
           <View>
             <Text className="mb-1 text-sm font-medium text-gray-700">{t('email')}</Text>
             <TextInput
+              testID="email-input"
               value={email}
               onChangeText={setEmail}
               autoCapitalize="none"
@@ -77,6 +78,7 @@ export default function LoginScreen() {
           <View>
             <Text className="mb-1 text-sm font-medium text-gray-700">{t('password')}</Text>
             <TextInput
+              testID="password-input"
               value={password}
               onChangeText={setPassword}
               secureTextEntry

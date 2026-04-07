@@ -9,6 +9,7 @@ import {
   insertEvent,
 } from '../db/event-queue';
 import { endLocalSession, getActiveLocalSession, insertLocalSession } from '../db/sessions';
+import { runSync } from '../sync/engine';
 import { useAuthStore } from './auth.store';
 
 /** Generates a UUID v4. Uses crypto.randomUUID() when available (Hermes/modern
@@ -41,6 +42,8 @@ interface WorkoutState {
   /** Defaults true; corrected by network monitor in RootLayout. */
   isOnline: boolean;
   pendingEventCount: number;
+  syncStatus: 'idle' | 'syncing' | 'error';
+  lastSyncedAt: string | null;
 
   setIsOnline: (online: boolean) => void;
   /** Called from AuthGate on SIGNED_IN / INITIAL_SESSION to restore a
@@ -50,6 +53,7 @@ interface WorkoutState {
   logSet: (input: LogSetInput) => Promise<void>;
   finishWorkout: () => Promise<void>;
   refreshPendingCount: () => Promise<void>;
+  performSync: () => Promise<void>;
 }
 
 export const useWorkoutStore = create<WorkoutState>()((set, get) => ({
@@ -57,8 +61,14 @@ export const useWorkoutStore = create<WorkoutState>()((set, get) => ({
   loggedSets: [],
   isOnline: true,
   pendingEventCount: 0,
+  syncStatus: 'idle' as const,
+  lastSyncedAt: null,
 
-  setIsOnline: (online) => set({ isOnline: online }),
+  setIsOnline: (online) => {
+    const wasOnline = get().isOnline;
+    set({ isOnline: online });
+    if (!wasOnline && online) void get().performSync();
+  },
 
   rehydrateFromDb: async () => {
     const db = await getDb();
@@ -86,6 +96,9 @@ export const useWorkoutStore = create<WorkoutState>()((set, get) => ({
         console.log('[WorkoutStore] Rehydrated session:', session.id, '— sets:', loggedSets.length);
     }
     await get().refreshPendingCount();
+    if (get().isOnline && get().pendingEventCount > 0) {
+      void get().performSync();
+    }
   },
 
   startWorkout: async () => {
@@ -200,5 +213,18 @@ export const useWorkoutStore = create<WorkoutState>()((set, get) => ({
     const db = await getDb();
     const count = await getPendingEventCount(db, deviceId);
     set({ pendingEventCount: count });
+  },
+
+  performSync: async () => {
+    if (get().syncStatus === 'syncing') return;
+    set({ syncStatus: 'syncing' });
+    try {
+      await runSync();
+      await get().refreshPendingCount();
+      set({ syncStatus: 'idle', lastSyncedAt: new Date().toISOString() });
+    } catch (err) {
+      if (__DEV__) console.error('[WorkoutStore] Sync failed:', err);
+      set({ syncStatus: 'error' });
+    }
   },
 }));

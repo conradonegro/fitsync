@@ -1,0 +1,45 @@
+# Workout: start a workout and log two sets.
+# Verifies SQLite writes are reflected in the UI immediately.
+# Simulator-safe.
+
+appId: com.fitsync.app
+---
+- runFlow: ../helpers/login.yaml
+
+# --- Start workout ---
+- tapOn: "Start Workout"
+- assertVisible: "Active Workout"
+- assertVisible: "Log Set"
+
+# --- Log first set: Squat 5 × 100 kg ---
+- tapOn:
+    id: "exercise-input"
+- inputText: "Squat"
+- tapOn:
+    id: "reps-input"
+- inputText: "5"
+- tapOn:
+    id: "weight-input"
+- inputText: "100"
+- tapOn: "Log Set"
+
+# Set appears in the logged-sets list
+- assertVisible: "Squat"
+- assertVisible: "Set 1"
+- assertVisible: "5 × 100 kg"
+
+# --- Log second set: same exercise, different reps/weight ---
+# Exercise name persists between sets; only reps and weight are cleared
+- tapOn:
+    id: "reps-input"
+- inputText: "3"
+- tapOn:
+    id: "weight-input"
+- inputText: "90"
+- tapOn: "Log Set"
+
+- assertVisible: "Set 2"
+- assertVisible: "3 × 90 kg"
+
+# Header shows set count
+- assertVisible: "2 sets logged"

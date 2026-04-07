@@ -7,7 +7,11 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint . --ext .ts,.tsx"
+    "lint": "eslint . --ext .ts,.tsx",
+    "test": "jest",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug"
   },
   "dependencies": {
     "@fitsync/database": "workspace:*",
@@ -27,15 +31,19 @@
   "devDependencies": {
     "@fitsync/eslint-config": "workspace:*",
     "@fitsync/typescript-config": "workspace:*",
+    "@playwright/test": "^1.59.1",
     "@tanstack/react-query-devtools": "^5.62.16",
+    "@types/jest": "^29.5.14",
     "@types/node": "^22.10.5",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "autoprefixer": "^10.4.20",
     "eslint": "^8.57.1",
     "eslint-config-next": "15.5.9",
+    "jest": "^29.7.0",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17",
+    "ts-jest": "^29.2.5",
     "typescript": "^5.7.3"
   }
 }

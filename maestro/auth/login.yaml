@@ -1,0 +1,9 @@
+# Auth: valid login redirects to home screen.
+# Simulator-safe.
+
+appId: com.fitsync.app
+---
+- runFlow: ../helpers/login.yaml
+- assertVisible: "FitSync"
+- assertVisible: "Start Workout"
+- assertVisible: "Sign out"

@@ -72,6 +72,12 @@
     "no_active_session": "No hay sesión de entrenamiento activa.",
     "go_back": "Volver",
     "pending_events": "{count} serie(s) pendientes de sincronización",
-    "started_at": "Iniciado {time}"
+    "started_at": "Iniciado {time}",
+    "sync_syncing": "Sincronizando...",
+    "sync_error": "Error de sincronización — se reintentará cuando haya conexión",
+    "workout_history": "Historial de entrenamientos",
+    "no_workouts": "Aún no hay entrenamientos registrados.",
+    "session_sets": "{count} series",
+    "duration_minutes": "{minutes} min"
   }
 }

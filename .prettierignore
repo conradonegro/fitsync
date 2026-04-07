@@ -7,3 +7,5 @@ build
 coverage
 pnpm-lock.yaml
 packages/database-types/src/types.ts
+apps/web/e2e/.auth/
+maestro/

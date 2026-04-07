@@ -110,7 +110,7 @@ Includes:
 - **D6 handoff**: `event_queue.synced_at IS NULL` is the flush filter; D6 adds the flush engine without touching D5 files.
 - Full flow works with airplane mode enabled (verify on physical device — see AC-D5).
 
-### D6 — Sync Engine
+### D6 — Sync Engine ✓ implemented
 
 The bridge between the mobile SQLite queue and the Supabase backend.
 
@@ -226,7 +226,7 @@ The following are **not** in Phase 1. Any PR introducing these is out of scope a
 
 - [ ] After re-enabling network, queued events flush automatically without user action.
 - [ ] Flushed events appear in Supabase `workout_events` table with correct `server_created_at`.
-- [ ] SQLite queue is empty after successful flush.
+- [ ] SQLite queue is empty after successful flush (all events for completed/finished workout sessions are deleted after the server confirms receipt; events for the currently active session are retained with `synced_at` set until the session ends).
 - [ ] Submitting the same event twice (simulated retry) does not create duplicate records in Supabase.
 - [ ] After sync, the trainer can see the athlete's completed session on the athlete detail page (web app).
 - [ ] Killing the app mid-flush and relaunching re-submits only unconfirmed events, not already-confirmed ones.
@@ -279,7 +279,7 @@ T12 Trainer web — athlete detail page shows synced sessions (D4, D6)
 
 TRACK D — Quality (runs in parallel from T1 onward, completes last)
 ─────────────────────────────────────────────────────────────────
-T13 Jest unit tests — shared schemas, sync logic, RBAC helpers
+T13 Jest unit tests — shared schemas, sync logic, RBAC helpers ✓
 T14 Playwright E2E — invite flow + sync flow (requires seed data from T2)
 T15 Maestro Android — offline logging + sync flow
 T16 CI pipeline — add Jest + Playwright + EAS + Vercel deploy (D7, D8 complete)

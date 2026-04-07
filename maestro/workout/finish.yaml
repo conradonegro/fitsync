@@ -1,0 +1,32 @@
+# Workout: finish a workout via the native confirmation alert.
+# Verifies the session_end event is written and the app returns home.
+# Simulator-safe.
+
+appId: com.fitsync.app
+---
+- runFlow: ../helpers/login.yaml
+
+# --- Start workout and log one set ---
+- tapOn: "Start Workout"
+- assertVisible: "Active Workout"
+- tapOn:
+    id: "exercise-input"
+- inputText: "Bench Press"
+- tapOn:
+    id: "reps-input"
+- inputText: "8"
+- tapOn:
+    id: "weight-input"
+- inputText: "60"
+- tapOn: "Log Set"
+- assertVisible: "Bench Press"
+
+# --- Finish workout ---
+- tapOn: "Finish Workout"
+# Native Alert.alert dialog appears with "Cancel" and "Confirm" buttons
+- tapOn: "Confirm"
+
+# Returns to home screen — no active session
+- assertVisible: "Start Workout"
+- assertNotVisible: "Resume Workout"
+- assertNotVisible: "Active Workout"

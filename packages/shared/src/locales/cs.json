@@ -72,6 +72,12 @@
     "no_active_session": "Žádná aktivní tréninková relace.",
     "go_back": "Zpět",
     "pending_events": "{count} série čekají na synchronizaci",
-    "started_at": "Zahájeno {time}"
+    "started_at": "Zahájeno {time}",
+    "sync_syncing": "Synchronizuji...",
+    "sync_error": "Synchronizace selhala — zkusí se znovu po připojení",
+    "workout_history": "Historie tréninků",
+    "no_workouts": "Zatím žádné tréninky.",
+    "session_sets": "{count} sérií",
+    "duration_minutes": "{minutes} min"
   }
 }

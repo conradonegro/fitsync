@@ -1,0 +1,43 @@
+# Workout: crash recovery — kill the app mid-workout and verify SQLite rehydration.
+# Confirms that rehydrateFromDb() restores the active session and logged sets.
+# Simulator-safe.
+
+appId: com.fitsync.app
+---
+- runFlow: ../helpers/login.yaml
+
+# --- Start workout and log a set ---
+- tapOn: "Start Workout"
+- assertVisible: "Active Workout"
+- tapOn:
+    id: "exercise-input"
+- inputText: "Deadlift"
+- tapOn:
+    id: "reps-input"
+- inputText: "3"
+- tapOn:
+    id: "weight-input"
+- inputText: "120"
+- tapOn: "Log Set"
+- assertVisible: "Deadlift"
+- assertVisible: "Set 1"
+- assertVisible: "3 × 120 kg"
+
+# --- Simulate crash: kill the app without finishing the workout ---
+- stopApp
+
+# --- Relaunch without clearing state ---
+# SecureStore retains the session; SQLite retains the event_queue rows.
+- launchApp
+- assertVisible: "FitSync"
+
+# rehydrateFromDb() detects the open session → shows "Resume Workout"
+- assertVisible: "Resume Workout"
+- assertNotVisible: "Start Workout"
+
+# --- Resume and verify the set is still in the list ---
+- tapOn: "Resume Workout"
+- assertVisible: "Active Workout"
+- assertVisible: "Deadlift"
+- assertVisible: "Set 1"
+- assertVisible: "3 × 120 kg"

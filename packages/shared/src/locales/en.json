@@ -72,6 +72,12 @@
     "no_active_session": "No active workout session.",
     "go_back": "Go back",
     "pending_events": "{count} set(s) pending sync",
-    "started_at": "Started {time}"
+    "started_at": "Started {time}",
+    "sync_syncing": "Syncing...",
+    "sync_error": "Sync failed — will retry when online",
+    "workout_history": "Workout History",
+    "no_workouts": "No workouts logged yet.",
+    "session_sets": "{count} sets",
+    "duration_minutes": "{minutes} min"
   }
 }

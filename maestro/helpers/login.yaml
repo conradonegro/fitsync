@@ -1,0 +1,20 @@
+# Reusable login subflow.
+# Launches the app with a clean state and logs in as the seed athlete.
+#
+# Usage (from a parent flow):
+#   - runFlow: ../helpers/login.yaml
+#
+# Does NOT have appId or --- — those belong to the parent flow.
+
+- launchApp:
+    clearState: true
+- assertVisible: "Sign in"
+- tapOn:
+    id: "email-input"
+- inputText: "athlete@fitsync.dev"
+- tapOn:
+    id: "password-input"
+- inputText: "Password123!"
+- tapOn: "Sign in"
+# Wait for AuthGate to fire SIGNED_IN, register device, and navigate home
+- assertVisible: "Start Workout"

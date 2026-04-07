@@ -1,0 +1,51 @@
+# Sync: offline workout → pending badge → reconnect → sync clears.
+#
+# ⚠️  PHYSICAL DEVICE ONLY
+# expo-network always reports isConnected=true in iOS Simulator / Android Emulator.
+# This flow requires a real device with airplane mode toggled manually.
+#
+# See maestro/PHYSICAL_DEVICE_TESTING.md for the complete step-by-step guide,
+# including exactly when to toggle airplane mode during this flow.
+
+appId: com.fitsync.app
+---
+- runFlow: ../helpers/login.yaml
+
+# PAUSE: Enable airplane mode on the device NOW, then resume the flow.
+# (See PHYSICAL_DEVICE_TESTING.md § "Offline Pending Badge")
+
+# Tap Start Workout — device is offline
+- tapOn: "Start Workout"
+- assertVisible: "Active Workout"
+# Offline indicator banner should be visible
+- assertVisible: "You are offline. Sets are saved locally."
+
+# Log one set
+- tapOn:
+    id: "exercise-input"
+- inputText: "Squat"
+- tapOn:
+    id: "reps-input"
+- inputText: "10"
+- tapOn:
+    id: "weight-input"
+- inputText: "80"
+- tapOn: "Log Set"
+- assertVisible: "Squat"
+
+# Finish workout
+- tapOn: "Finish Workout"
+- tapOn: "Confirm"
+
+# Home screen — pending badge shows unsynced event count
+- assertVisible: "1 set(s) pending sync"
+
+# PAUSE: Disable airplane mode NOW, then resume the flow.
+# (See PHYSICAL_DEVICE_TESTING.md § "Offline Pending Badge")
+
+# setIsOnline(true) fires → performSync() starts
+- assertVisible: "Syncing..."
+
+# Sync completes — pending badge clears
+- assertNotVisible: "1 set(s) pending sync"
+- assertNotVisible: "Syncing..."

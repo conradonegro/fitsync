@@ -1,0 +1,9 @@
+# Auth: tapping "Sign out" returns to the login screen.
+# Simulator-safe.
+
+appId: com.fitsync.app
+---
+- runFlow: ../helpers/login.yaml
+- tapOn: "Sign out"
+- assertVisible: "Sign in"
+- assertNotVisible: "Start Workout"

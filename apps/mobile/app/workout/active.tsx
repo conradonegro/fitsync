@@ -134,6 +134,7 @@ export default function ActiveWorkoutScreen() {
           <View className="mb-3">
             <Text className="mb-1 text-sm font-medium text-gray-700">{t('exercise_name')}</Text>
             <TextInput
+              testID="exercise-input"
               value={exerciseName}
               onChangeText={setExerciseName}
               autoCapitalize="words"
@@ -146,6 +147,7 @@ export default function ActiveWorkoutScreen() {
             <View className="flex-1">
               <Text className="mb-1 text-sm font-medium text-gray-700">{t('reps')}</Text>
               <TextInput
+                testID="reps-input"
                 value={reps}
                 onChangeText={setReps}
                 keyboardType="number-pad"
@@ -157,6 +159,7 @@ export default function ActiveWorkoutScreen() {
             <View className="flex-1">
               <Text className="mb-1 text-sm font-medium text-gray-700">{t('weight_kg')}</Text>
               <TextInput
+                testID="weight-input"
                 value={weightKg}
                 onChangeText={setWeightKg}
                 keyboardType="decimal-pad"

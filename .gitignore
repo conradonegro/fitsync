@@ -35,6 +35,7 @@ coverage/
 playwright-report/
 test-results/
 maestro/screenshots/
+e2e/.auth/
 
 # OS
 .DS_Store

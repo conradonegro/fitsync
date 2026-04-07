@@ -1,0 +1,29 @@
+# Auth: client-side validation errors on the login form.
+# Simulator-safe.
+
+appId: com.fitsync.app
+---
+
+# --- Scenario 1: invalid email format shows error ---
+- launchApp:
+    clearState: true
+- assertVisible: "Sign in"
+- tapOn:
+    id: "email-input"
+- inputText: "notanemail"
+- tapOn:
+    id: "password-input"
+- inputText: "Password123!"
+- tapOn: "Sign in"
+- assertVisible: "Please enter a valid email address"
+
+# --- Scenario 2: empty password shows required error ---
+- launchApp:
+    clearState: true
+- assertVisible: "Sign in"
+- tapOn:
+    id: "email-input"
+- inputText: "athlete@fitsync.dev"
+# Leave password empty — tap Sign in immediately
+- tapOn: "Sign in"
+- assertVisible: "This field is required"

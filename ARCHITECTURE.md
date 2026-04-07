@@ -137,7 +137,9 @@ ATHLETE DEVICE                          SERVER
 
 **SQLite responsibilities**: Source of truth for offline reads, event write queue, persisted `last_server_timestamp` for catch-up. Never used for secrets.
 
-**D5 implements steps 1–3** (local write path): action → SQLite `event_queue` insert → optimistic Zustand UI update. The local schema lives in `apps/mobile/db/` (client, schema, event-queue, sessions). **D6 will implement steps 4–9** (flush/catch-up path) without touching D5 files — `event_queue.synced_at` is the handoff column.
+**D5 implements steps 1–3** (local write path): action → SQLite `event_queue` insert → optimistic Zustand UI update. The local schema lives in `apps/mobile/db/` (client, schema, event-queue, sessions). The `event_queue.synced_at` column is the handoff between D5 and D6.
+
+**D6 implements steps 4–9** (flush + catch-up path): `apps/mobile/sync/engine.ts` (`runSync()`) flushes the queue in batches of 50, upserts `workout_sessions` + `workout_events` on Supabase (idempotent via `onConflict`), updates `ended_at` on session close (guarded with `.is('ended_at', null)`), and deletes confirmed events for finished sessions (active-session events are marked `synced_at` instead of deleted so crash recovery remains intact). Catch-up queries `workout_events WHERE server_created_at > last_server_timestamp`; new rows from other devices go into `remote_events` (SQLite). `sync_state` (SQLite key-value) persists `last_server_timestamp`. The `WorkoutStore.performSync()` action orchestrates `runSync()` and exposes `syncStatus` / `lastSyncedAt` to the UI. `setIsOnline` triggers `performSync` on `false → true` transition; `rehydrateFromDb` triggers it on app open if pending events exist and the device is online.
 
 **TanStack Query responsibilities**: Performance cache for online reads only. Never authoritative. Always considered stale on app resume.
 
@@ -217,12 +219,22 @@ All business logic stays in Postgres functions, RLS policies, and the client-sid
 
 ### 3.8 Testing Strategy
 
-| Layer              | Tool                                 | Scope                                                    |
-| ------------------ | ------------------------------------ | -------------------------------------------------------- |
-| Unit / Integration | Jest + React Testing Library         | Shared logic, Zod schemas, components                    |
-| Web E2E            | Playwright                           | Full trainer flows against local Supabase with seed data |
-| Mobile E2E         | Maestro (Android in CI, iOS locally) | Core athlete flows on device/emulator                    |
-| Type safety        | `tsc --noEmit`                       | Run on every PR, blocks merge on failure                 |
+| Layer              | Tool                                 | Scope                                                                    |
+| ------------------ | ------------------------------------ | ------------------------------------------------------------------------ |
+| Unit / Integration | Jest + ts-jest                       | Shared schemas/RBAC, SQLite helpers, sync engine, stores, server actions |
+| Web E2E            | Playwright                           | Full trainer flows against local Supabase with seed data                 |
+| Mobile E2E         | Maestro (Android in CI, iOS locally) | Core athlete flows on device/emulator                                    |
+| Type safety        | `tsc --noEmit`                       | Run on every PR, blocks merge on failure                                 |
+
+**Jest test distribution** (239 tests total):
+
+| Package           | Tests | Coverage                                                                                                          |
+| ----------------- | ----- | ----------------------------------------------------------------------------------------------------------------- |
+| `packages/shared` | 100   | Zod schemas (profile, workout session, workout event), RBAC helpers                                               |
+| `apps/mobile`     | 97    | SQLite helpers (client, event-queue, sessions, sync-state, remote-events), auth store, workout store, sync engine |
+| `apps/web`        | 42    | Relationship server actions (inviteAthlete, acceptInvitation, getPendingInviteDetails, revokeRelationship)        |
+
+**Jest configuration** (`apps/mobile`): uses `ts-jest` with `isolatedModules: true`. Expo native packages (`expo-secure-store`, `expo-sqlite`) and `@fitsync/database` are stubbed via `moduleNameMapper` + `__mocks__/` directory — the build targets (native binaries, Supabase env vars) are irrelevant in a unit test context. Uses `jest.resetAllMocks()` (not `clearAllMocks`) in `beforeEach` to clear `mockResolvedValueOnce` queues between tests.
 
 **CI triggers**:
 
@@ -511,13 +523,14 @@ fitsync/
 │   ├── web/                           # Next.js App Router (trainer-focused)
 │   │   ├── app/                       # App Router pages, layouts, route handlers
 │   │   │   ├── actions/               # Server Actions (auth, relationships)
+│   │   │   │   └── __tests__/         # Jest unit tests for server actions
 │   │   │   ├── dashboard/             # Trainer-only area (layout guards role)
 │   │   │   │   ├── layout.tsx         # Trainer role guard + sidebar nav
 │   │   │   │   ├── page.tsx           # Redirects to /dashboard/athletes
 │   │   │   │   └── athletes/          # Roster + invite + athlete detail
 │   │   │   │       ├── page.tsx       # Roster list + InviteAthleteForm
 │   │   │   │       ├── invite-athlete-form.tsx  # Client Component (useActionState)
-│   │   │   │       └── [id]/page.tsx  # Athlete detail (name, status, history placeholder)
+│   │   │   │       └── [id]/page.tsx  # Athlete detail (name, status, synced workout history)
 │   │   │   ├── invite/accept/         # Public invite accept page (unauthenticated allowed)
 │   │   │   │   └── page.tsx           # Client Component (useSearchParams + Suspense)
 │   │   │   ├── login/                 # Login page
@@ -544,15 +557,24 @@ fitsync/
 │       │   └── index.tsx              # Athlete home screen (Start/Resume + pending badge)
 │       ├── components/                # Mobile-only components
 │       │   └── OfflineIndicator.tsx   # Yellow banner when isOnline = false
-│       ├── db/                        # SQLite layer (D5 local write path)
+│       ├── __mocks__/                 # Jest module stubs (Expo native + Supabase client)
+│       │   ├── expo-native-stub.js    # Stub for expo-secure-store and expo-sqlite
+│       │   └── database-stub.js       # Stub for @fitsync/database (avoids env-var load in tests)
+│       ├── db/                        # SQLite layer
 │       │   ├── client.ts              # Lazy singleton getDb()
-│       │   ├── schema.ts              # DDL: local_sessions + event_queue (WAL mode)
-│       │   ├── event-queue.ts         # insertEvent, getNextSequence, getPendingEventCount
-│       │   └── sessions.ts            # insertLocalSession, endLocalSession, getActiveLocalSession
+│       │   ├── schema.ts              # DDL: local_sessions + event_queue + sync_state + remote_events (WAL)
+│       │   ├── event-queue.ts         # insertEvent, getUnsyncedEvents, deleteEvents, markEventsSynced, …
+│       │   ├── sessions.ts            # insertLocalSession, endLocalSession, getActiveLocalSession
+│       │   ├── sync-state.ts          # getSyncState / setSyncState (key-value, last_server_timestamp)
+│       │   ├── remote-events.ts       # upsertRemoteEvents (catch-up rows from other devices)
+│       │   └── __tests__/             # Jest unit tests for all db helpers
 │       ├── store/                     # Zustand stores
 │       │   ├── auth.store.ts          # { user, deviceId, isInitializing }
-│       │   └── workout.store.ts       # { activeSessionId, loggedSets, isOnline, pendingEventCount }
-│       ├── sync/                      # Event flush logic, catch-up (D6)
+│       │   ├── workout.store.ts       # { activeSessionId, loggedSets, isOnline, pendingEventCount, syncStatus, lastSyncedAt }
+│       │   └── __tests__/             # Jest unit tests for auth.store + workout.store
+│       ├── sync/                      # D6 sync engine
+│       │   ├── engine.ts              # runSync(): flush loop + catch-up orchestrator
+│       │   └── __tests__/             # Jest unit tests for sync engine
 │       ├── app.config.ts             # EAS config + env injection via Constants
 │       ├── eas.json                  # EAS Build profiles (development/preview/production)
 │       ├── metro.config.js           # NativeWind + monorepo watchFolders
@@ -562,7 +584,9 @@ fitsync/
 │   ├── shared/                        # Zero infrastructure deps — the brain of the app
 │   │   ├── src/
 │   │   │   ├── schemas/               # Zod schemas (aligned with database-types)
+│   │   │   │   └── __tests__/         # Jest unit tests for all Zod schemas
 │   │   │   ├── rbac/                  # Role definitions, permission helpers
+│   │   │   │   └── __tests__/         # Jest unit tests for RBAC helpers
 │   │   │   ├── business-logic/        # Pure functions: aggregations, conflict detection
 │   │   │   └── locales/               # i18n JSON files
 │   │   │       ├── en.json
@@ -600,6 +624,15 @@ fitsync/
 │       ├── base.js
 │       ├── next.js
 │       └── react-native.js
+│
+├── maestro/                           # Maestro mobile E2E flows (ADR-025)
+│   ├── helpers/
+│   │   └── login.yaml                 # Reusable login subflow
+│   ├── auth/                          # Auth flows (login, logout, validation)
+│   ├── workout/                       # Workout flows (start/log, finish, crash-recovery)
+│   ├── sync/                          # Sync flows (pending badge — physical device only)
+│   ├── README.md                      # Setup + quick-start guide
+│   └── PHYSICAL_DEVICE_TESTING.md     # Step-by-step guide for offline/network scenarios
 │
 ├── .github/
 │   └── workflows/

@@ -42,5 +42,25 @@ export async function initDatabase(db: SQLite.SQLiteDatabase): Promise<void> {
 
     CREATE INDEX IF NOT EXISTS event_queue_synced_idx
       ON event_queue (synced_at) WHERE synced_at IS NULL;
+
+    CREATE TABLE IF NOT EXISTS sync_state (
+      key   TEXT PRIMARY KEY NOT NULL,
+      value TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS remote_events (
+      id                TEXT PRIMARY KEY NOT NULL,
+      session_id        TEXT NOT NULL,
+      athlete_id        TEXT NOT NULL,
+      device_id         TEXT NOT NULL,
+      client_sequence   INTEGER NOT NULL,
+      event_type        TEXT NOT NULL,
+      payload           TEXT NOT NULL,
+      client_created_at TEXT NOT NULL,
+      server_created_at TEXT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS remote_events_session_idx
+      ON remote_events (session_id, client_sequence ASC);
   `);
 }

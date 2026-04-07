@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 
 import { Button } from '@fitsync/ui';
 
@@ -10,11 +10,13 @@ import { useWorkoutStore } from '../store/workout.store';
 
 export default function HomeScreen() {
   const { t } = useTranslation('workout');
+  const { t: tCommon } = useTranslation('common');
   const { t: tAuth } = useTranslation('auth');
   const router = useRouter();
 
   const { user, signOut, deviceId } = useAuthStore();
-  const { activeSessionId, pendingEventCount, startWorkout } = useWorkoutStore();
+  const { activeSessionId, pendingEventCount, syncStatus, startWorkout, performSync } =
+    useWorkoutStore();
 
   const today = new Date().toLocaleDateString(undefined, {
     weekday: 'long',
@@ -43,7 +45,24 @@ export default function HomeScreen() {
 
       {/* Content */}
       <View className="flex-1 px-6 pt-8">
-        {pendingEventCount > 0 && (
+        {syncStatus === 'syncing' && (
+          <View className="mb-6 flex-row items-center gap-2 rounded-lg bg-blue-50 px-4 py-3">
+            <View className="h-2 w-2 rounded-full bg-blue-400" />
+            <Text className="text-sm font-medium text-blue-700">{t('sync_syncing')}</Text>
+          </View>
+        )}
+        {syncStatus === 'error' && (
+          <View className="mb-6 flex-row items-center justify-between rounded-lg bg-orange-50 px-4 py-3">
+            <View className="flex-row items-center gap-2">
+              <View className="h-2 w-2 rounded-full bg-orange-400" />
+              <Text className="text-sm font-medium text-orange-700">{t('sync_error')}</Text>
+            </View>
+            <TouchableOpacity onPress={() => void performSync()}>
+              <Text className="text-sm font-semibold text-orange-600">{tCommon('retry')}</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+        {syncStatus === 'idle' && pendingEventCount > 0 && (
           <View className="mb-6 flex-row items-center gap-2 rounded-lg bg-blue-50 px-4 py-3">
             <View className="h-2 w-2 rounded-full bg-blue-400" />
             <Text className="text-sm font-medium text-blue-700">

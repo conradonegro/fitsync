@@ -38,6 +38,7 @@ PR1 is a pure code PR. It lands all the files, but the `migrate-staging` and `de
 - [ ] **Step 1: Check the installed Supabase CLI version**
 
 Run:
+
 ```bash
 supabase --version
 ```
@@ -47,6 +48,7 @@ Expected: a version string like `2.20.5` or similar. If the CLI is not installed
 - [ ] **Step 2: Check the installed Vercel CLI version**
 
 Run:
+
 ```bash
 vercel --version
 ```
@@ -62,12 +64,14 @@ You'll substitute these two values into the `env:` block of `ci.yml` in Task A6.
 ### Task A2: Add husky and lint-staged dev dependencies
 
 **Files:**
+
 - Modify: `package.json` (root)
 - Modify: `pnpm-lock.yaml`
 
 - [ ] **Step 1: Add husky and lint-staged to root devDependencies**
 
 Run at the repo root:
+
 ```bash
 pnpm add -Dw husky lint-staged
 ```
@@ -81,6 +85,7 @@ Open `package.json` and confirm the `devDependencies` block now includes `husky`
 - [ ] **Step 3: Set the `prepare` script so `pnpm install` wires up husky automatically**
 
 Run:
+
 ```bash
 pnpm pkg set scripts.prepare="husky"
 ```
@@ -90,6 +95,7 @@ Then open `package.json` and confirm `"scripts"` now contains `"prepare": "husky
 - [ ] **Step 4: Re-run pnpm install to trigger the prepare script**
 
 Run:
+
 ```bash
 pnpm install
 ```
@@ -99,6 +105,7 @@ Expected: pnpm runs, the `prepare` script fires, and `.husky/_/` is created with
 - [ ] **Step 5: Verify `.husky/_/` exists**
 
 Run:
+
 ```bash
 ls -la .husky/
 ```
@@ -110,6 +117,7 @@ Expected: a `_` subdirectory appears. The `.husky/` directory itself exists but 
 ### Task A3: Create `.husky/pre-commit`
 
 **Files:**
+
 - Create: `.husky/pre-commit`
 
 - [ ] **Step 1: Write the pre-commit hook**
@@ -124,6 +132,7 @@ pnpm exec lint-staged
 - [ ] **Step 2: Make the hook executable**
 
 Run:
+
 ```bash
 chmod +x .husky/pre-commit
 ```
@@ -133,6 +142,7 @@ chmod +x .husky/pre-commit
 - [ ] **Step 3: Verify the file exists and is executable**
 
 Run:
+
 ```bash
 ls -la .husky/pre-commit
 ```
@@ -144,6 +154,7 @@ Expected: file exists, has execute permissions (`-rwxr-xr-x` or similar).
 ### Task A4: Create `.husky/pre-push`
 
 **Files:**
+
 - Create: `.husky/pre-push`
 
 - [ ] **Step 1: Write the pre-push hook**
@@ -176,6 +187,7 @@ pnpm format:check
 - [ ] **Step 2: Make the hook executable**
 
 Run:
+
 ```bash
 chmod +x .husky/pre-push
 ```
@@ -183,6 +195,7 @@ chmod +x .husky/pre-push
 - [ ] **Step 3: Verify the file exists and is executable**
 
 Run:
+
 ```bash
 ls -la .husky/pre-push
 ```
@@ -194,6 +207,7 @@ Expected: file exists, has execute permissions.
 ### Task A5: Add lint-staged config to root `package.json`
 
 **Files:**
+
 - Modify: `package.json` (root)
 
 - [ ] **Step 1: Read the current `package.json` to find the right place to insert**
@@ -221,6 +235,7 @@ Insert this block as a new top-level key in `package.json` (between `devDependen
 - [ ] **Step 3: Verify the JSON is still valid**
 
 Run:
+
 ```bash
 pnpm pkg get lint-staged
 ```
@@ -232,6 +247,7 @@ Expected: a JSON object that echoes the config you just added. If this command e
 ### Task A6: Rewrite `.github/workflows/ci.yml` with the full three-job workflow
 
 **Files:**
+
 - Modify: `.github/workflows/ci.yml` (full rewrite)
 
 This is the largest single change in the plan. The new file replaces the existing typecheck-and-lint-only skeleton with the full three-job workflow from spec §5.
@@ -241,14 +257,17 @@ This is the largest single change in the plan. The new file replaces the existin
 - [ ] **Step 1: Substitute the CLI version numbers you recorded in Task A1**
 
 In the YAML below, find the lines:
+
 ```yaml
-  SUPABASE_CLI_VERSION: '<REPLACE-WITH-SUPABASE-CLI-VERSION>'
-  VERCEL_CLI_VERSION: '<REPLACE-WITH-VERCEL-CLI-VERSION>'
+SUPABASE_CLI_VERSION: '<REPLACE-WITH-SUPABASE-CLI-VERSION>'
+VERCEL_CLI_VERSION: '<REPLACE-WITH-VERCEL-CLI-VERSION>'
 ```
+
 and replace both placeholders with the real values from Task A1 before writing the file. Example:
+
 ```yaml
-  SUPABASE_CLI_VERSION: '2.20.5'
-  VERCEL_CLI_VERSION: '39.1.2'
+SUPABASE_CLI_VERSION: '2.20.5'
+VERCEL_CLI_VERSION: '39.1.2'
 ```
 
 - [ ] **Step 2: Write the file**
@@ -455,6 +474,7 @@ Expected: the single line `ci.yml parses OK` on stdout with exit code 0. If PyYA
 - [ ] **Step 4: Confirm you substituted the CLI versions**
 
 Run:
+
 ```bash
 grep -n "REPLACE-WITH" .github/workflows/ci.yml
 ```
@@ -466,12 +486,14 @@ Expected: **no output** (zero matches). If anything prints, you forgot to substi
 ### Task A7: Delete `deploy-web.yml` and `eas-build.yml`
 
 **Files:**
+
 - Delete: `.github/workflows/deploy-web.yml`
 - Delete: `.github/workflows/eas-build.yml`
 
 - [ ] **Step 1: Delete both files**
 
 Run:
+
 ```bash
 rm .github/workflows/deploy-web.yml
 rm .github/workflows/eas-build.yml
@@ -480,6 +502,7 @@ rm .github/workflows/eas-build.yml
 - [ ] **Step 2: Verify only `ci.yml` remains**
 
 Run:
+
 ```bash
 ls .github/workflows/
 ```
@@ -491,6 +514,7 @@ Expected output: exactly `ci.yml` and nothing else.
 ### Task A8: Update `.gitignore`
 
 **Files:**
+
 - Modify: `.gitignore`
 
 **Context:** `.turbo/` is already gitignored wholesale — no sub-path additions needed for turbo. Two new ignores are required: `.vercel/` (per-dev Vercel project binding, contains project IDs that should stay local) and `.husky/_/` (husky v9 auto-generated helper directory).
@@ -518,6 +542,7 @@ Immediately after that block, add:
 - [ ] **Step 2: Verify the new entries are in the file**
 
 Run:
+
 ```bash
 grep -n "^.vercel/$\|^.husky/_/$" .gitignore
 ```
@@ -529,6 +554,7 @@ Expected output: two lines, each matching one of the new entries.
 ### Task A9: Update `PHASE1_SCOPE.md`
 
 **Files:**
+
 - Modify: `PHASE1_SCOPE.md` (§2 D7 "Includes" block, §4 AC-D7 checklist, §5 T16 task description)
 
 **Context:** Spec §8 contains the exact replacement text. This task applies those replacements.
@@ -628,6 +654,7 @@ Open `PHASE1_SCOPE.md` and skim the D7 section plus AC-D7. Confirm no stray mark
 ### Task A10: Update `ARCHITECTURE.md` (add ADR-026, amend ADR-022 and ADR-023)
 
 **Files:**
+
 - Modify: `ARCHITECTURE.md`
 
 - [ ] **Step 1: Amend ADR-022 Status line**
@@ -658,7 +685,7 @@ Find the end of `### ADR-025 — Maestro Mobile E2E Testing` (around line 500). 
 - **Decision:** Quality gates are split across three enforcement tiers:
   1. **Per-commit (fast):** `lint-staged` via `.husky/pre-commit` runs eslint + prettier on staged files only (~5s).
   2. **Per-push (medium):** `.husky/pre-push` runs `pnpm exec turbo run typecheck lint build test --filter="...[origin/main]"` followed by `pnpm format:check` — covers typecheck, lint, build, Jest unit tests, and repo-wide format check for packages affected by the current diff against `origin/main` (~15–90s). Turbo remote cache keeps cache-hit packages near-free.
-  3. **Manual "before opening a PR" (developer discipline):** Playwright E2E (`cd apps/web && pnpm test:e2e`), `gen:types` drift (`pnpm gen:types && git diff --exit-code packages/database-types/src/types.ts`), and Maestro mobile E2E (`maestro test maestro/...`) are run manually when the developer is ready to open a PR. These are *not* in the pre-push hook because each requires external state (local Supabase running, simulator or device, a Next.js dev server) that isn't reliably present on every `git push`. Documented as a "Before opening a PR" checklist in `CLAUDE.md`.
+  3. **Manual "before opening a PR" (developer discipline):** Playwright E2E (`cd apps/web && pnpm test:e2e`), `gen:types` drift (`pnpm gen:types && git diff --exit-code packages/database-types/src/types.ts`), and Maestro mobile E2E (`maestro test maestro/...`) are run manually when the developer is ready to open a PR. These are _not_ in the pre-push hook because each requires external state (local Supabase running, simulator or device, a Next.js dev server) that isn't reliably present on every `git push`. Documented as a "Before opening a PR" checklist in `CLAUDE.md`.
 
   GitHub Actions CI runs a minimal `verify` job (typecheck + lint + format:check + build, ~90 seconds) as a safety net against hook bypasses, plus the deploy pipeline on push to `main` (`migrate-staging` → `deploy-production`). Production EAS Builds are invoked manually from the developer's machine — no CI trigger. There is no `develop` branch and no PR preview deployments.
 
@@ -666,8 +693,8 @@ Find the end of `### ADR-025 — Maestro Mobile E2E Testing` (around line 500). 
 
 - **Consequences:**
   - The pre-push hook enforces only what `turbo run` can handle via the affected-package filter: typecheck, lint, build, Jest. Plus a repo-wide `format:check`. It does **not** enforce Playwright, Maestro, or `gen:types` drift — those rely on developer discipline via the pre-PR checklist in `CLAUDE.md`.
-  - A developer who runs `git push --no-verify` without re-running checks, or who skips the pre-PR checklist, can push code that fails Jest, Playwright, Maestro, or `gen:types` drift. The CI `verify` job will *not* catch any of these — only typecheck/lint/format/build run in CI. The social contract is that `--no-verify` and skipping the checklist are conscious acts for emergencies and WIP, not routine.
-  - Phase 1 Acceptance Criteria AC-D7 is reworded to reflect this split. Jest failures block push via the pre-push hook. Playwright/Maestro/gen:types drift block *opening a PR* via the manual checklist, not push. Typecheck/lint/format/build are the only things that also block merge in CI.
+  - A developer who runs `git push --no-verify` without re-running checks, or who skips the pre-PR checklist, can push code that fails Jest, Playwright, Maestro, or `gen:types` drift. The CI `verify` job will _not_ catch any of these — only typecheck/lint/format/build run in CI. The social contract is that `--no-verify` and skipping the checklist are conscious acts for emergencies and WIP, not routine.
+  - Phase 1 Acceptance Criteria AC-D7 is reworded to reflect this split. Jest failures block push via the pre-push hook. Playwright/Maestro/gen:types drift block _opening a PR_ via the manual checklist, not push. Typecheck/lint/format/build are the only things that also block merge in CI.
   - When the team grows beyond one developer, this ADR should be revisited. The "trust the hook + trust the checklist" model scales poorly beyond ~3 contributors because each new machine is a new opportunity for hook installation to fail silently and each new contributor is a new chance to skip the checklist.
   - `deploy-web.yml` and `eas-build.yml` as separate workflow files are deleted. Vercel deploy concerns fold into `ci.yml`; EAS Build is removed from CI entirely.
   - There is no `develop` branch and no `preview-*` tag triggers. EAS preview builds are invoked manually with `eas build --profile preview --non-interactive` when a preview is actually needed.
@@ -707,6 +734,7 @@ Replace with:
 - [ ] **Step 5: Verify the ADR numbering is consistent**
 
 Run:
+
 ```bash
 grep -c "^### ADR-" ARCHITECTURE.md
 ```
@@ -718,6 +746,7 @@ Expected output: `26` (the count after adding ADR-026).
 ### Task A11: Update `CLAUDE.md`
 
 **Files:**
+
 - Modify: `CLAUDE.md` (append new sections + update existing CI/CD section)
 
 - [ ] **Step 1: Replace the existing `### CI/CD` section**
@@ -744,15 +773,17 @@ Single workflow file: `.github/workflows/ci.yml`. Three jobs: `verify` (typechec
 
 Scroll to the end of `CLAUDE.md` (after the "Key Reference Docs" section). Append these sections, keeping the existing content above them intact:
 
-```markdown
-
+````markdown
 ## D7 — Migrations policy (Phase 1)
+
 Additive changes only: new tables, new columns (nullable or defaulted), new indexes, new RLS policies. No column drops, no type changes, no data rewrites. Destructive changes require a two-PR dance (add new thing → deploy → backfill; then drop old thing in a follow-up). Reason: `supabase db push` is forward-only and staging rollback means restoring from daily backup. See ADR-026.
 
 ## D7 — Local hooks
+
 `pnpm install` wires up husky via the `prepare` script. `.husky/pre-commit` runs `pnpm exec lint-staged` on staged files only (~5s). `.husky/pre-push` runs `pnpm exec turbo run typecheck lint build test --filter="...[origin/main]"` followed by `pnpm format:check` (~15–90s depending on what changed). **Scope of the pre-push hook: typecheck, lint, build, Jest unit tests (via turbo), and repo-wide format:check only.** Playwright, Maestro, and `gen:types` drift are NOT in the hook — see the "Before opening a PR" checklist below. Use `git commit --no-verify` / `git push --no-verify` consciously for WIP and emergencies — CI's `verify` job is the only safety net when bypassed.
 
 ## D7 — Before opening a PR (manual checklist)
+
 Run these before opening any PR. The pre-push hook cannot run them because each needs external state that isn't reliably present on every push.
 
 1. **Playwright web E2E** — requires local Supabase running with seed data + the Next.js dev server:
@@ -761,6 +792,8 @@ Run these before opening any PR. The pre-push hook cannot run them because each 
    pnpm dev --filter=@fitsync/web &         # background
    cd apps/web && pnpm test:e2e
    ```
+````
+
 2. **gen:types drift check** — required when `supabase/migrations/` has changed. Requires local Supabase running:
    ```bash
    pnpm gen:types
@@ -774,18 +807,23 @@ Run these before opening any PR. The pre-push hook cannot run them because each 
 4. If any of the above fail, fix locally before pushing the PR.
 
 ## D7 — Mobile builds (manual)
+
 EAS production and preview builds are invoked locally, not by CI:
+
 - Preview: `cd apps/mobile && eas build --profile preview --non-interactive`
 - Production: `cd apps/mobile && eas build --profile production --non-interactive`
 
 Free-tier quota: ~30 builds/month. Queue times: 20–40 min. Apple Developer ($99/yr) and Google Play Console ($25 one-time) required for actual store distribution.
 
 ## D7 — Deployment provisioning (one-time)
+
 See `docs/superpowers/specs/2026-04-08-d7-cicd-pipeline-design.md` §4 for one-time setup of Vercel project, Supabase access token + DB password, EAS init, Turbo remote cache, GitHub Environments, repository variables/secrets, and branch protection.
 
 ## D7 — Branch protection gotcha
+
 GitHub branch protection's "required status checks" matches by exact job `name:` string. The `verify` job in `ci.yml` is registered as `Verify`. If you rename the job, you must also update the required check name in repo settings — otherwise branch protection silently stops gating merges.
-```
+
+````
 
 - [ ] **Step 3: Verify the file is still well-formed markdown**
 
@@ -802,13 +840,14 @@ Skim `CLAUDE.md` from top to bottom. Confirm no broken code fences, orphan headi
 Run:
 ```bash
 pnpm typecheck
-```
+````
 
 Expected: zero TypeScript errors. If there are errors, fix them before continuing.
 
 - [ ] **Step 2: Run lint**
 
 Run:
+
 ```bash
 pnpm lint
 ```
@@ -818,6 +857,7 @@ Expected: zero ESLint errors. Fix any before continuing.
 - [ ] **Step 3: Run format check**
 
 Run:
+
 ```bash
 pnpm format:check
 ```
@@ -827,6 +867,7 @@ Expected: all files pass Prettier's check. If anything fails, run `pnpm format` 
 - [ ] **Step 4: Run build**
 
 Run:
+
 ```bash
 pnpm build
 ```
@@ -836,6 +877,7 @@ Expected: all packages build successfully. If anything fails, debug and fix befo
 - [ ] **Step 5: Run Jest unit tests**
 
 Run:
+
 ```bash
 pnpm test
 ```
@@ -879,6 +921,7 @@ If `git diff --stat CLAUDE.md` shows no changes, something went wrong and A11's 
 - [ ] **Step 8: Verify the pre-push hook runs without actually pushing**
 
 Run the pre-push hook script directly to confirm it executes:
+
 ```bash
 sh .husky/pre-push
 ```
@@ -896,6 +939,7 @@ Expected: you see `turbo run` output (cache-hit or run-from-scratch for each pac
 - [ ] **Step 1: Review the working tree**
 
 Run:
+
 ```bash
 git status
 ```
@@ -905,6 +949,7 @@ Expected: modifications to `package.json`, `pnpm-lock.yaml`, `.gitignore`, `.git
 - [ ] **Step 2: Stage everything D7-related**
 
 Run:
+
 ```bash
 git add package.json pnpm-lock.yaml .gitignore \
         .github/workflows/ci.yml \
@@ -919,6 +964,7 @@ Expected: every D7-related file shows as staged. Nothing outside D7 scope should
 - [ ] **Step 3: Commit**
 
 Run:
+
 ```bash
 git commit -m "$(cat <<'EOF'
 feat(d7): minimal CI + husky hooks + local-first quality gates
@@ -956,6 +1002,7 @@ EOF
 - [ ] **Step 4: Push the branch**
 
 Run:
+
 ```bash
 git push -u origin feat/d7-cicd
 ```
@@ -965,6 +1012,7 @@ Expected: the branch pushes cleanly. If GitHub asks about setting upstream, `-u`
 - [ ] **Step 5: Open the PR**
 
 Run:
+
 ```bash
 gh pr create --title "feat(d7): minimal CI + husky hooks + local-first quality gates" --body "$(cat <<'EOF'
 ## Summary
@@ -990,6 +1038,7 @@ EOF
 - [ ] **Step 6: Watch CI**
 
 Run:
+
 ```bash
 gh pr checks --watch
 ```
@@ -999,6 +1048,7 @@ Expected: `Verify` runs green (~90 seconds). `Migrate Staging` and `Deploy Produ
 - [ ] **Step 7: Merge PR1**
 
 Once CI is green:
+
 ```bash
 gh pr merge --squash --delete-branch
 ```
@@ -1023,6 +1073,7 @@ These are browser-and-local-CLI tasks you execute yourself. Each references the 
 - [ ] **Step 1: Execute spec §4 Phase A1 sub-steps 1–6** in your browser against vercel.com.
 
 Follow the spec's exact guidance. Key constraints:
+
 - Reserve the project name `fitsync` so the deployment URL is `https://fitsync.vercel.app`
 - **Disable automatic deployments on push** in Project Settings → Git (ADR-023 requirement)
 - Set all five environment variables (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `APP_URL`) scoped to both **Production** and **Preview** environments
@@ -1049,6 +1100,7 @@ If you know the staging DB password, use it. If not, reset it via Supabase Dashb
 - [ ] **Step 1: Authenticate and initialize**
 
 Run:
+
 ```bash
 cd apps/mobile
 eas login                   # opens browser if not already logged in
@@ -1058,6 +1110,7 @@ eas init                    # creates the EAS project
 - [ ] **Step 2: Check for `app.config.ts` drift**
 
 Run:
+
 ```bash
 git diff apps/mobile/app.config.ts
 ```
@@ -1065,10 +1118,13 @@ git diff apps/mobile/app.config.ts
 **If the diff is empty:** `eas init` did not modify `app.config.ts`. Skip to Step 3.
 
 **If the diff shows a change to `extra.eas.projectId`:** `eas init` replaced the line:
+
 ```ts
       projectId: process.env['EAS_PROJECT_ID'],
 ```
+
 with a literal project ID string, e.g.:
+
 ```ts
       projectId: 'abc12345-6789-0def-ghij-klmnopqrstuv',
 ```
@@ -1094,6 +1150,7 @@ EAS_PROJECT_ID=<paste-the-uuid-you-captured-above>
 - [ ] **Step 4: Verify `app.config.ts` is clean and `.env.local` is not staged**
 
 Run:
+
 ```bash
 git diff apps/mobile/app.config.ts
 git status apps/mobile/.env.local
@@ -1106,6 +1163,7 @@ Expected for `git status`: the file appears as untracked or in "Ignored files" �
 - [ ] **Step 5: Create EAS Secrets used at build time**
 
 Run:
+
 ```bash
 eas secret:create --scope project --name SUPABASE_URL --value https://rjhzkgomgsztcyrhkywf.supabase.co
 eas secret:create --scope project --name SUPABASE_ANON_KEY --value <staging-anon-key-from-supabase-dashboard>
@@ -1116,6 +1174,7 @@ Replace `<staging-anon-key-from-supabase-dashboard>` with the actual anon key va
 - [ ] **Step 6: Verify the secrets are set**
 
 Run:
+
 ```bash
 eas secret:list
 ```
@@ -1127,6 +1186,7 @@ Expected: shows `SUPABASE_URL` and `SUPABASE_ANON_KEY` as project-scoped secrets
 - [ ] **Step 1: Authenticate and link**
 
 From the repo root:
+
 ```bash
 pnpm exec turbo login       # opens browser, authenticates with Vercel
 pnpm exec turbo link        # binds repo to your Vercel-hosted Turbo cache
@@ -1135,6 +1195,7 @@ pnpm exec turbo link        # binds repo to your Vercel-hosted Turbo cache
 - [ ] **Step 2: Check for `.turbo/config.json` drift**
 
 Run:
+
 ```bash
 git status .turbo/ 2>/dev/null
 ```
@@ -1166,6 +1227,7 @@ Go to **New environment** → name `production` → **Configure environment**. U
 - [ ] **Step 3: Verify both environments exist**
 
 Run:
+
 ```bash
 gh api "repos/$(gh repo view --json nameWithOwner -q .nameWithOwner)/environments" --jq '.environments[].name'
 ```
@@ -1177,6 +1239,7 @@ Expected: `staging` and `production` both appear in the output.
 - [ ] **Step 1: Add `STAGING_SUPABASE_PROJECT_REF`**
 
 Run:
+
 ```bash
 gh variable set STAGING_SUPABASE_PROJECT_REF --body "rjhzkgomgsztcyrhkywf"
 ```
@@ -1186,6 +1249,7 @@ Expected: `✓ Set repository variable STAGING_SUPABASE_PROJECT_REF`.
 - [ ] **Step 2: Verify**
 
 Run:
+
 ```bash
 gh variable list
 ```
@@ -1213,6 +1277,7 @@ For each one, paste the value when prompted.
 - [ ] **Step 2: Verify all seven are listed**
 
 Run:
+
 ```bash
 gh secret list
 ```
@@ -1232,6 +1297,7 @@ Critical safety step before enabling the deploy jobs in Part E.
 - [ ] **Step 1: Authenticate with Supabase**
 
 Run:
+
 ```bash
 supabase login
 ```
@@ -1241,6 +1307,7 @@ This uses the access token you captured in Task B2. If it prompts for a token, p
 - [ ] **Step 2: Link the repo to the staging project**
 
 Run from the repo root:
+
 ```bash
 supabase link --project-ref rjhzkgomgsztcyrhkywf
 ```
@@ -1250,6 +1317,7 @@ Expected: "Finished supabase link." If prompted for the database password, paste
 - [ ] **Step 3: List migrations (local vs. remote)**
 
 Run:
+
 ```bash
 supabase migration list --linked
 ```
@@ -1265,6 +1333,7 @@ If the output shows migrations in Remote but NOT in Local → **STOP**. This is 
 - [ ] **Step 5: Final confirmation**
 
 Re-run:
+
 ```bash
 supabase migration list --linked
 ```
@@ -1282,6 +1351,7 @@ Expected: zero drift. Only proceed to Part E when this is true.
 - [ ] **Step 1: Make sure `main` is up to date**
 
 Run:
+
 ```bash
 git checkout main
 git pull origin main
@@ -1290,6 +1360,7 @@ git pull origin main
 - [ ] **Step 2: Create the PR2 branch**
 
 Run:
+
 ```bash
 git checkout -b feat/d7-enable-deploys
 ```
@@ -1297,28 +1368,35 @@ git checkout -b feat/d7-enable-deploys
 ### Task E2: Remove the `if: false` overrides in `ci.yml`
 
 **Files:**
+
 - Modify: `.github/workflows/ci.yml`
 
 - [ ] **Step 1: Remove `false &&` from `migrate-staging`**
 
 Open `.github/workflows/ci.yml`. Find the `migrate-staging` job. Change:
+
 ```yaml
-    if: false && github.event_name == 'push' && github.ref == 'refs/heads/main'
+if: false && github.event_name == 'push' && github.ref == 'refs/heads/main'
 ```
+
 to:
+
 ```yaml
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 ```
 
 - [ ] **Step 2: Remove `false &&` from `deploy-production`**
 
 Find the `deploy-production` job. Change:
+
 ```yaml
-    if: false && github.event_name == 'push' && github.ref == 'refs/heads/main'
+if: false && github.event_name == 'push' && github.ref == 'refs/heads/main'
 ```
+
 to:
+
 ```yaml
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 ```
 
 - [ ] **Step 3: Remove the "TEMPORARY" comment blocks above both jobs**
@@ -1326,15 +1404,16 @@ to:
 In the block immediately above each of the two jobs, delete these comment lines (keep the rest of each comment block intact — just the three TEMPORARY lines go):
 
 ```yaml
-  #
-  # TEMPORARY: `if: false && ...` is a PR1 safety gate.
-  # Part E of the implementation plan removes `false &&`
-  # after manual provisioning and pre-flight are complete.
+#
+# TEMPORARY: `if: false && ...` is a PR1 safety gate.
+# Part E of the implementation plan removes `false &&`
+# after manual provisioning and pre-flight are complete.
 ```
 
 - [ ] **Step 4: Verify the diff**
 
 Run:
+
 ```bash
 git diff .github/workflows/ci.yml
 ```
@@ -1362,6 +1441,7 @@ Expected: all pass. Playwright, Maestro, and `gen:types` drift are not strictly 
 - [ ] **Step 2: Stage and commit**
 
 Run:
+
 ```bash
 git add .github/workflows/ci.yml
 git commit -m "$(cat <<'EOF'
@@ -1380,6 +1460,7 @@ EOF
 - [ ] **Step 3: Push and open PR2**
 
 Run:
+
 ```bash
 git push -u origin feat/d7-enable-deploys
 gh pr create --title "feat(d7): enable migrate-staging + deploy-production jobs" --body "$(cat <<'EOF'
@@ -1402,6 +1483,7 @@ EOF
 - [ ] **Step 4: Watch CI**
 
 Run:
+
 ```bash
 gh pr checks --watch
 ```
@@ -1421,6 +1503,7 @@ gh pr merge --squash --delete-branch
 - [ ] **Step 1: Pull main locally**
 
 Run:
+
 ```bash
 git checkout main
 git pull origin main
@@ -1429,6 +1512,7 @@ git pull origin main
 - [ ] **Step 2: Watch the push-to-main workflow**
 
 Run:
+
 ```bash
 gh run list --branch main --limit 1
 ```
@@ -1448,6 +1532,7 @@ gh run view <run-id> --log-failed
 ```
 
 Common failure modes and fixes:
+
 - `migrate-staging` fails with authentication error → double-check `SUPABASE_ACCESS_TOKEN` and `SUPABASE_DB_PASSWORD` in repo secrets (Part C3)
 - `deploy-production` fails with "project not found" → double-check `VERCEL_ORG_ID` and `VERCEL_PROJECT_ID` in repo secrets
 - `deploy-production` fails with missing env vars at build time → check that `NEXT_PUBLIC_SUPABASE_URL` etc. are set in the Vercel dashboard (Task B1 step 6), scoped to **Production**
@@ -1457,6 +1542,7 @@ Forward-fix via a new commit — do NOT use `git revert` on a deploy-breaking ch
 - [ ] **Step 4: Verify the deployed web app**
 
 Open `https://fitsync.vercel.app` in a browser:
+
 - Page loads without errors
 - Log in as the seed trainer (`trainer@fitsync.dev` / `Password123!` — these exist in staging if D2 seed was applied there)
 - Navigate to the athletes roster page — should load without errors
@@ -1477,6 +1563,7 @@ In the repo's GitHub UI: Settings → **Branches** → **Add branch ruleset** (o
 - [ ] **Step 2: Configure the ruleset**
 
 Enable the following:
+
 - ☑ **Require a pull request before merging**
   - Required approvals: **0**
   - ☑ Dismiss stale reviews when new commits are pushed
@@ -1495,16 +1582,18 @@ Click **Create** (or **Save changes**).
 - [ ] **Step 4: Verify via CLI**
 
 Run:
+
 ```bash
 gh api "repos/$(gh repo view --json nameWithOwner -q .nameWithOwner)/branches/main/protection" --jq '{required_status_checks: .required_status_checks.contexts, linear_history: .required_linear_history, force_pushes: .allow_force_pushes}'
 ```
 
 Expected output (approximate shape):
+
 ```json
 {
   "required_status_checks": ["Verify"],
-  "linear_history": {"enabled": true},
-  "force_pushes": {"enabled": false}
+  "linear_history": { "enabled": true },
+  "force_pushes": { "enabled": false }
 }
 ```
 

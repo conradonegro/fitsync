@@ -250,30 +250,30 @@ Erasure requests anonymize PII in place rather than hard-deleting records. This 
 
 ## 4. Tech Stack
 
-| Layer          | Technology                              | Rationale                                                                             |
-| -------------- | --------------------------------------- | ------------------------------------------------------------------------------------- |
-| Web App        | Next.js 15 (App Router)                 | SSR, routing, SEO, standard for React full-stack                                      |
-| Mobile App     | Expo (managed workflow) + React Native  | Cross-platform, managed build pipeline via EAS, compatible with target native modules |
-| Shared UI      | `packages/ui` with platform-split files | Single package, one API, Metro/Next.js resolve correct implementation automatically   |
-| Web Styling    | TailwindCSS                             | Utility-first, zero runtime, excellent with App Router                                |
-| Mobile Styling | NativeWind v5 (preview)                 | Tailwind v4 syntax for React Native, built on New Architecture + react-native-css     |
-| Server State   | TanStack Query v5                       | Best-in-class async data caching, optimistic updates, hydration support               |
-| Client State   | Zustand                                 | Minimal boilerplate, works identically on web and native, no Redux overhead           |
-| Backend        | Supabase                                | Postgres + RLS + Auth + Realtime + Edge Functions in one platform                     |
-| Offline Store  | Expo SQLite                             | Persistent local storage for event queue and offline read cache                       |
-| Secure Storage | expo-secure-store                       | Encrypted storage for `device_id` and sensitive tokens                                |
-| i18n (web)     | next-intl                               | Purpose-built for Next.js App Router, Server Component support                        |
-| i18n (mobile)  | react-i18next                           | Mature, flexible, React Native compatible                                             |
-| Email          | Resend                                  | Modern transactional email, excellent TypeScript SDK, generous free tier              |
-| Error Tracking | Sentry                                  | SDKs for both Next.js and Expo, free tier covers MVP                                  |
-| Payments       | Stripe                                  | Industry standard, deferred to Phase 2, schema stubbed                                |
-| Monorepo       | Turborepo + pnpm                        | Fast incremental builds, shared dependency management                                 |
-| Type System    | TypeScript (strict)                     | `strict: true`, `exactOptionalPropertyTypes: true`, `moduleResolution: "bundler"`     |
-| Testing        | Jest + RTL + Playwright + Maestro       | Full coverage from unit to E2E across both platforms                                  |
-| Linting        | ESLint + Prettier                       | Consistent style, enforced pre-commit and in CI                                       |
-| CI/CD          | GitHub Actions                          | Typecheck + test on PR; EAS Build + Vercel deploy on merge                            |
-| Web Deploy     | Vercel                                  | Zero-config Next.js, preview URLs per PR, custom domain ready                         |
-| Mobile Deploy  | EAS Build + App Stores                  | Managed native builds, `development` / `preview` / `production` profiles              |
+| Layer          | Technology                              | Rationale                                                                                                        |
+| -------------- | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Web App        | Next.js 15 (App Router)                 | SSR, routing, SEO, standard for React full-stack                                                                 |
+| Mobile App     | Expo (managed workflow) + React Native  | Cross-platform, managed build pipeline via EAS, compatible with target native modules                            |
+| Shared UI      | `packages/ui` with platform-split files | Single package, one API, Metro/Next.js resolve correct implementation automatically                              |
+| Web Styling    | TailwindCSS                             | Utility-first, zero runtime, excellent with App Router                                                           |
+| Mobile Styling | NativeWind v5 (preview)                 | Tailwind v4 syntax for React Native, built on New Architecture + react-native-css                                |
+| Server State   | TanStack Query v5                       | Best-in-class async data caching, optimistic updates, hydration support                                          |
+| Client State   | Zustand                                 | Minimal boilerplate, works identically on web and native, no Redux overhead                                      |
+| Backend        | Supabase                                | Postgres + RLS + Auth + Realtime + Edge Functions in one platform                                                |
+| Offline Store  | Expo SQLite                             | Persistent local storage for event queue and offline read cache                                                  |
+| Secure Storage | expo-secure-store                       | Encrypted storage for `device_id` and sensitive tokens                                                           |
+| i18n (web)     | next-intl                               | Purpose-built for Next.js App Router, Server Component support                                                   |
+| i18n (mobile)  | react-i18next                           | Mature, flexible, React Native compatible                                                                        |
+| Email          | Resend                                  | Modern transactional email, excellent TypeScript SDK, generous free tier                                         |
+| Error Tracking | Sentry                                  | SDKs for both Next.js and Expo, free tier covers MVP                                                             |
+| Payments       | Stripe                                  | Industry standard, deferred to Phase 2, schema stubbed                                                           |
+| Monorepo       | Turborepo + pnpm                        | Fast incremental builds, shared dependency management                                                            |
+| Type System    | TypeScript (strict)                     | `strict: true`, `exactOptionalPropertyTypes: true`, `moduleResolution: "bundler"`                                |
+| Testing        | Jest + RTL + Playwright + Maestro       | Full coverage from unit to E2E across both platforms                                                             |
+| Linting        | ESLint + Prettier                       | Consistent style, enforced pre-commit and in CI                                                                  |
+| CI/CD          | GitHub Actions                          | Single `ci.yml`: `verify` gates PRs, `migrate-staging` + `deploy-production` run on push to `main`. See ADR-026. |
+| Web Deploy     | Vercel                                  | Zero-config Next.js, preview URLs per PR, custom domain ready                                                    |
+| Mobile Deploy  | EAS Build + App Stores                  | Managed native builds; `development` / `preview` / `production` profiles, all invoked manually (see ADR-026).    |
 
 ---
 
@@ -475,7 +475,7 @@ Erasure requests anonymize PII in place rather than hard-deleting records. This 
 - **Decision**: Expo managed workflow. EAS Build with three profiles: `development` (local dev client), `preview` (internal testing via TestFlight / Play Store internal track), `production` (public store builds). EAS Build is only triggered on merge to `develop` (preview) or `main` (production), never on PRs.
 - **Rationale**: Managed workflow covers all current and planned native requirements (health data sync via config plugin in Phase 2). EAS Build on PRs is prohibitively slow on free tier (20–40 minute queue times). Full CI (typecheck + lint + tests) runs on every PR via Linux runners.
 - **Consequences**: Developers cannot test production-parity native builds locally without triggering an EAS Build or using the local Expo dev client.
-- **Status**: Approved
+- **Status**: Approved (Amended by ADR-026 — EAS Build is now manual, not branch-triggered)
 
 ---
 
@@ -484,7 +484,7 @@ Erasure requests anonymize PII in place rather than hard-deleting records. This 
 - **Decision**: Vercel hosts the Next.js web app. Vercel's native GitHub auto-deploy integration is disabled. All deployments are triggered explicitly by GitHub Actions using the Vercel CLI. Preview deployments are created on PR. Production deployment occurs on merge to `main` after all CI checks pass.
 - **Rationale**: Vercel's auto-deploy and GitHub Actions would both trigger on every push, causing race conditions and wasted build minutes. GitHub Actions as the single deployment controller ensures deployments only happen after tests pass.
 - **Consequences**: Vercel project settings must have automatic deployments disabled at initial setup. Deployment keys must be stored in GitHub Actions secrets.
-- **Status**: Approved
+- **Status**: Approved (Amended by ADR-026 — deploys fold into ci.yml; PR previews are out of scope for Phase 1)
 
 ---
 
@@ -503,6 +503,32 @@ Erasure requests anonymize PII in place rather than hard-deleting records. This 
 - **Rationale**: iOS simulators require macOS runners which cost ~10x more than Linux runners. Maestro is simpler to configure than Detox for Expo apps and sufficient for MVP-level coverage. Android in CI catches the majority of integration regressions.
 - **Consequences**: iOS-specific regressions may not be caught in CI. Developers must run iOS Maestro locally before submitting PRs with native-affecting changes.
 - **Status**: Approved
+
+---
+
+### ADR-026 — Local-First Quality Gates, CI for Deploys Only
+
+- **Decision:** Quality gates are split across three enforcement tiers:
+  1. **Per-commit (fast):** `lint-staged` via `.husky/pre-commit` runs eslint + prettier on staged files only (~5s).
+  2. **Per-push (medium):** `.husky/pre-push` runs `pnpm exec turbo run typecheck lint build test --filter="...[origin/main]"` followed by `pnpm format:check` — covers typecheck, lint, build, Jest unit tests, and repo-wide format check for packages affected by the current diff against `origin/main` (~15–90s). Turbo remote cache keeps cache-hit packages near-free.
+  3. **Manual "before opening a PR" (developer discipline):** Playwright E2E (`cd apps/web && pnpm test:e2e`), `gen:types` drift (`pnpm gen:types && git diff --exit-code packages/database-types/src/types.ts`), and Maestro mobile E2E (`maestro test maestro/...`) are run manually when the developer is ready to open a PR. These are _not_ in the pre-push hook because each requires external state (local Supabase running, simulator or device, a Next.js dev server) that isn't reliably present on every `git push`. Documented as a "Before opening a PR" checklist in `CLAUDE.md`.
+
+  GitHub Actions CI runs a minimal `verify` job (typecheck + lint + format:check + build, ~90 seconds) as a safety net against hook bypasses, plus the deploy pipeline on push to `main` (`migrate-staging` → `deploy-production`). Production EAS Builds are invoked manually from the developer's machine — no CI trigger. There is no `develop` branch and no PR preview deployments.
+
+- **Rationale:** For a solo-developer project in Phase 1, running the full test suite twice — once locally and once again in CI — duplicates 3–5 minutes of feedback time per PR for near-zero marginal safety. The developer is going to run checks before pushing regardless; the question is whether CI should repeat what the developer already ran. Pre-push hooks enforce the fast subset (typecheck, lint, build, Jest) that doesn't depend on external state. The slower checks (Playwright, Maestro, gen:types drift) need external state that isn't reliably present on every push, so forcing them into the hook would make the hook fragile and drive the developer toward `--no-verify`. Instead, they remain as a documented pre-PR checklist, enforced by developer discipline rather than automation. The CI `verify` job catches the narrow slice of issues that could slip through (primarily: a developer committing with `--no-verify` and forgetting to re-run checks). Production EAS Builds are ceremonial rather than automatic because (a) the free-tier 30-builds/month cap makes per-push builds irresponsible, (b) cutting an app-store-ready build is a release event, not a side effect of merging a PR, and (c) the 20–40 minute EAS free-tier queue times make automatic triggers frustrating.
+
+- **Consequences:**
+  - The pre-push hook enforces only what `turbo run` can handle via the affected-package filter: typecheck, lint, build, Jest. Plus a repo-wide `format:check`. It does **not** enforce Playwright, Maestro, or `gen:types` drift — those rely on developer discipline via the pre-PR checklist in `CLAUDE.md`.
+  - A developer who runs `git push --no-verify` without re-running checks, or who skips the pre-PR checklist, can push code that fails Jest, Playwright, Maestro, or `gen:types` drift. The CI `verify` job will _not_ catch any of these — only typecheck/lint/format/build run in CI. The social contract is that `--no-verify` and skipping the checklist are conscious acts for emergencies and WIP, not routine.
+  - Phase 1 Acceptance Criteria AC-D7 is reworded to reflect this split. Jest failures block push via the pre-push hook. Playwright/Maestro/gen:types drift block _opening a PR_ via the manual checklist, not push. Typecheck/lint/format/build are the only things that also block merge in CI.
+  - When the team grows beyond one developer, this ADR should be revisited. The "trust the hook + trust the checklist" model scales poorly beyond ~3 contributors because each new machine is a new opportunity for hook installation to fail silently and each new contributor is a new chance to skip the checklist.
+  - `deploy-web.yml` and `eas-build.yml` as separate workflow files are deleted. Vercel deploy concerns fold into `ci.yml`; EAS Build is removed from CI entirely.
+  - There is no `develop` branch and no `preview-*` tag triggers. EAS preview builds are invoked manually with `eas build --profile preview --non-interactive` when a preview is actually needed.
+  - Pre-push hooks add ~15–90 seconds to every `git push` depending on what changed, dropping further on cache hits via Turbo remote cache.
+  - Migrations are forward-only and additive in Phase 1: no column drops, type changes, or data rewrites. Destructive changes require a two-PR dance (add new thing, deploy, backfill → drop old thing in a follow-up). Reason: `supabase db push` is forward-only; staging rollback means restoring from daily backup, which the free tier provides.
+
+- **Status:** Approved
+- **Amends:** ADR-022 (Mobile Distribution & CI), ADR-023 (Web Deployment Strategy)
 
 ---
 

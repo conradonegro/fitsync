@@ -125,16 +125,25 @@ Includes:
 
 ### D7 — CI/CD Pipeline
 
-Fully automated pipeline from PR to production.
+Local-first quality gates with minimal CI for deploys only. See ADR-026.
 
 Includes:
 
-- **`ci.yml`**: triggered on every PR. Runs typecheck, ESLint, Jest, Playwright (web E2E against local Supabase with seed data). Blocks merge on failure.
-- **`deploy-web.yml`**: triggered on merge to `main`. Deploys to Vercel production via Vercel CLI. Requires all CI checks to have passed.
-- **`eas-build.yml`**: triggered on merge to `develop` (EAS preview profile) and `main` (EAS production profile). Never triggered on PRs.
-- **`gen-types` step**: `supabase gen types` runs in CI. Type drift between DB schema and `packages/database-types` causes pipeline failure.
-- Vercel auto-deploy disabled in project settings.
-- All secrets (Supabase keys, Vercel token, EAS token, Sentry DSN, Resend API key) stored in GitHub Actions secrets vault.
+- **`ci.yml`**: one workflow, three jobs.
+  - `verify` runs on every PR and push to `main`. Typecheck, lint, format:check, build (~90s). Required status check on `main`.
+  - `migrate-staging` runs on push to `main` only. Runs `supabase db push --dry-run` then `supabase db push` against staging. Needs `verify`.
+  - `deploy-production` runs on push to `main` only. Vercel CLI deploy to production. Needs `migrate-staging`.
+- **No separate `deploy-web.yml` or `eas-build.yml`** — both deleted. Production mobile builds are manual, invoked via `eas build --profile production --non-interactive` from the developer's machine.
+- **Local pre-commit + pre-push hooks** (husky v9 + lint-staged): commit-time runs eslint + prettier on staged files; push-time runs `pnpm exec turbo run typecheck lint build test --filter="...[origin/main]"`.
+- **No `develop` branch and no PR preview deployments.** Preview EAS builds are also manual.
+- **Turbo remote cache** enabled via `TURBO_TOKEN` / `TURBO_TEAM` — keeps CI builds fast and matches local cache behavior.
+- Vercel auto-deploy disabled in project settings (per ADR-023); all Vercel deploys triggered explicitly by `ci.yml`.
+- All secrets stored in the correct store per type:
+  - **GitHub Actions secrets** for CI operations: Vercel token + IDs, Supabase access token + DB password, Turbo cache credentials.
+  - **EAS Secrets** for mobile runtime: Supabase URL, Supabase anon key (`SENTRY_DSN` deferred to D8).
+  - **Supabase Edge Function secrets** for the `send-invitation` function: `RESEND_API_KEY` remains in place (pre-existing). D7 does not add any new Edge Function secrets — the Edge Function reads `acceptUrl` from its request body, not from env.
+- **Migration policy (Phase 1):** additive changes only. See ADR-026 for the two-PR dance pattern for destructive changes.
+- **Branch protection on `main`:** strict (PR required, `Verify` status check required, linear history, force-push blocked). "Include administrators" Off.
 
 ### D8 — Observability Baseline
 
@@ -234,14 +243,43 @@ The following are **not** in Phase 1. Any PR introducing these is out of scope a
 
 ### AC-D7: CI/CD Pipeline
 
-- [ ] A PR with a TypeScript error blocks merge.
+**Per-commit gates (enforced by `.husky/pre-commit` + `lint-staged`):**
+
+- [ ] Committing unformatted or lint-failing code auto-fixes what it can and aborts on unfixable issues.
+
+**Per-push gates (enforced by `.husky/pre-push`):**
+
+- [ ] Pushing code with a typecheck error is blocked by the pre-push hook.
+- [ ] Pushing code with an ESLint error is blocked.
+- [ ] Pushing code with a format drift is blocked.
+- [ ] Pushing code with a broken `pnpm build` is blocked.
+- [ ] Pushing code with a failing Jest test is blocked.
+- [ ] `git push --no-verify` bypasses the hook (intentional escape hatch — verify it works).
+
+**Before-opening-a-PR manual checklist (documented in `CLAUDE.md`, not automated):**
+
+- [ ] `cd apps/web && pnpm test:e2e` — Playwright E2E tests pass (requires local Supabase running with seed data + Next.js dev server).
+- [ ] `pnpm gen:types && git diff --exit-code packages/database-types/src/types.ts` — generated types match the committed file (requires local Supabase running). Run whenever `supabase/migrations/` has changed.
+- [ ] `maestro test maestro/auth/ && maestro test maestro/workout/` — mobile E2E flows pass on a running simulator or device. Required only when mobile-relevant code changed.
+
+**CI quality gates (enforced by `verify` job in `ci.yml`):**
+
+- [ ] A PR with a TypeScript error blocks merge (`Verify` status check fails).
 - [ ] A PR with an ESLint error blocks merge.
-- [ ] A failing Jest test blocks merge.
-- [ ] A failing Playwright test blocks merge.
-- [ ] Merging a passing PR to `main` triggers a Vercel production deployment.
-- [ ] The deployed web app is accessible at the Vercel subdomain.
-- [ ] Merging to `develop` triggers an EAS preview build.
-- [ ] A schema change without a corresponding `gen:types` run causes CI to fail.
+- [ ] A PR with a format drift blocks merge.
+- [ ] A PR with a broken build blocks merge.
+
+**CI deploy pipeline:**
+
+- [ ] Merging a passing PR to `main` runs `supabase db push --dry-run` then `supabase db push` against staging.
+- [ ] After successful migration, Vercel production deploy runs automatically.
+- [ ] The deployed web app is accessible at `https://fitsync.vercel.app`.
+- [ ] A merged PR with an invalid migration fails the `migrate-staging` job and blocks the production deploy (`deploy-production` does not run).
+
+**Manual mobile build pipeline:**
+
+- [ ] `cd apps/mobile && eas build --profile preview --non-interactive` from local produces a working internal-distribution Android APK.
+- [ ] `cd apps/mobile && eas build --profile production --non-interactive` from local produces a working store-submission build.
 
 ### AC-D8: Observability
 
@@ -282,7 +320,9 @@ TRACK D — Quality (runs in parallel from T1 onward, completes last)
 T13 Jest unit tests — shared schemas, sync logic, RBAC helpers ✓
 T14 Playwright E2E — invite flow + sync flow (requires seed data from T2)
 T15 Maestro Android — offline logging + sync flow
-T16 CI pipeline — add Jest + Playwright + EAS + Vercel deploy (D7, D8 complete)
+T16 CI pipeline — single ci.yml (verify + migrate-staging + deploy-production),
+    husky pre-commit + pre-push hooks, branch protection. Local-first model
+    per ADR-026. (D7 complete.)
 T17 Sentry source maps + alert configuration (D8)
 ```
 

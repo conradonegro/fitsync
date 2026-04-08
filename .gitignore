@@ -17,6 +17,12 @@ android/
 # Turbo
 .turbo/
 
+# Vercel (project binding — per-developer, never commit)
+.vercel/
+
+# Husky v9 auto-generated helpers (hooks live in .husky/ but the _/ subdir is generated)
+.husky/_/
+
 # Environment files
 .env
 .env.local

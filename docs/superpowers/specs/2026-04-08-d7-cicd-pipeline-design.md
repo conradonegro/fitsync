@@ -1,13 +1,13 @@
 # D7 — CI/CD Pipeline (Local-First Quality Gates Design)
 
-| Field | Value |
-|---|---|
-| **Status** | Approved (design); implementation pending |
-| **Date** | 2026-04-08 |
-| **Branch** | `feat/d7-cicd` |
-| **Deliverable** | D7 — CI/CD Pipeline (per `PHASE1_SCOPE.md` §2) |
-| **Related ADRs** | ADR-026 (new), amends ADR-022 and ADR-023 |
-| **Supersedes** | None |
+| Field            | Value                                          |
+| ---------------- | ---------------------------------------------- |
+| **Status**       | Approved (design); implementation pending      |
+| **Date**         | 2026-04-08                                     |
+| **Branch**       | `feat/d7-cicd`                                 |
+| **Deliverable**  | D7 — CI/CD Pipeline (per `PHASE1_SCOPE.md` §2) |
+| **Related ADRs** | ADR-026 (new), amends ADR-022 and ADR-023      |
+| **Supersedes**   | None                                           |
 
 ---
 
@@ -19,15 +19,15 @@
 
 ### 1.2 What changed during design
 
-After exploring the problem space, the team made a deliberate decision to move *most* quality gates from CI to local checks. The reasoning is captured in ADR-026 and summarized below:
+After exploring the problem space, the team made a deliberate decision to move _most_ quality gates from CI to local checks. The reasoning is captured in ADR-026 and summarized below:
 
 - For a solo developer running every check locally before pushing anyway, duplicating the full test matrix in CI adds 3–5 minutes of feedback latency per PR for near-zero marginal safety
 - Pre-push hooks (with sensible filters via `turbo run --filter`) enforce the fast-feedback subset of checks — typecheck, lint, format, build, and Jest unit tests — on every push without requiring external services
-- Playwright E2E, Maestro mobile E2E, and `gen:types` drift are *not* run by the pre-push hook because each needs external state (local Supabase running, simulators, a Next.js dev server). These are documented as a "before opening a PR" manual checklist in `CLAUDE.md` and remain the developer's responsibility to run at the right moments
+- Playwright E2E, Maestro mobile E2E, and `gen:types` drift are _not_ run by the pre-push hook because each needs external state (local Supabase running, simulators, a Next.js dev server). These are documented as a "before opening a PR" manual checklist in `CLAUDE.md` and remain the developer's responsibility to run at the right moments
 - A minimal CI `verify` job remains as a safety net for the narrow case of `--no-verify` bypasses
 - EAS Build is removed from CI entirely — production mobile builds become a deliberate manual command, not a side effect of merging
 
-This design represents the *minimal* shape of D7 that still satisfies the *intent* of the original AC-D7 (broken code never reaches production), while explicitly deviating from the *literal text* of several AC items. The literal AC text is rewritten to reflect the new model — see §8.2 below.
+This design represents the _minimal_ shape of D7 that still satisfies the _intent_ of the original AC-D7 (broken code never reaches production), while explicitly deviating from the _literal text_ of several AC items. The literal AC text is rewritten to reflect the new model — see §8.2 below.
 
 ### 1.3 Existing state at design time
 
@@ -43,23 +43,23 @@ This design represents the *minimal* shape of D7 that still satisfies the *inten
 
 ## 2. Locked design decisions
 
-| # | Topic | Decision |
-|---|---|---|
-| 1 | Branching | Single `main` branch. No `develop`, no `preview-*` tag triggers. |
-| 2 | Vercel project | Does not exist; provisioned during D7. Reserve project name `fitsync` so `APP_URL=https://fitsync.vercel.app` is deterministic from day one. |
-| 3 | EAS project | Expo account exists; project initialized via `eas init` during D7. |
-| 4 | Test matrix | Pre-push hook runs typecheck + lint + format:check + build + Jest (via turbo filter). Playwright E2E, Maestro, and `gen:types` drift are *not* in the hook — they need external state (local Supabase, simulators, dev server) and are documented as a "before opening a PR" manual checklist in `CLAUDE.md`. CI `verify` runs only typecheck + lint + format:check + build. |
-| 5 | CI structure | Single `ci.yml` workflow, three jobs: `verify` (PR + push), `migrate-staging` (push to main only, needs verify), `deploy-production` (push to main only, needs migrate-staging). |
-| 6 | Vercel previews | None. PR preview deploys are not in D7 scope. |
-| 7 | Branch protection | Strict on `main`. `verify` is the only required status check. "Include administrators" Off. |
-| 8 | Backend for deploys | Both production and (future) preview Vercel deploys point at staging Supabase `rjhzkgomgsztcyrhkywf`. |
-| 9 | Failure notifications | GitHub default email only. |
-| 10 | EAS Build trigger | Manual only. `eas build --profile {preview,production} --non-interactive` from local machine. No CI integration. |
-| 11 | Migration drift mitigation | `migrate-staging` job runs `supabase db push --dry-run` then `supabase db push` against staging *before* `deploy-production`. Atomic ordering via `needs:`. |
-| 12 | Migration safety policy | Additive changes only in Phase 1 — see §7 (ADR-026). |
-| 13 | Local quality gates | husky v9 + lint-staged. `pre-commit` runs `lint-staged` (~5s); `pre-push` runs `pnpm exec turbo run typecheck lint build test --filter="...[origin/main]"` followed by `pnpm format:check` (~15–90s). Scope of what the hook enforces: see row 4. |
-| 14 | Turbo remote cache | Enabled via Vercel-hosted cache. `TURBO_TOKEN` + `TURBO_TEAM` secrets; one-time `turbo login && turbo link` locally. |
-| 15 | Concurrency control | Single concurrency group `ci-${{ github.ref }}`. PRs cancel-in-progress on new pushes; pushes to `main` wait for older runs to finish (never cancel mid-`db push`). |
+| #   | Topic                      | Decision                                                                                                                                                                                                                                                                                                                                                                     |
+| --- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Branching                  | Single `main` branch. No `develop`, no `preview-*` tag triggers.                                                                                                                                                                                                                                                                                                             |
+| 2   | Vercel project             | Does not exist; provisioned during D7. Reserve project name `fitsync` so `APP_URL=https://fitsync.vercel.app` is deterministic from day one.                                                                                                                                                                                                                                 |
+| 3   | EAS project                | Expo account exists; project initialized via `eas init` during D7.                                                                                                                                                                                                                                                                                                           |
+| 4   | Test matrix                | Pre-push hook runs typecheck + lint + format:check + build + Jest (via turbo filter). Playwright E2E, Maestro, and `gen:types` drift are _not_ in the hook — they need external state (local Supabase, simulators, dev server) and are documented as a "before opening a PR" manual checklist in `CLAUDE.md`. CI `verify` runs only typecheck + lint + format:check + build. |
+| 5   | CI structure               | Single `ci.yml` workflow, three jobs: `verify` (PR + push), `migrate-staging` (push to main only, needs verify), `deploy-production` (push to main only, needs migrate-staging).                                                                                                                                                                                             |
+| 6   | Vercel previews            | None. PR preview deploys are not in D7 scope.                                                                                                                                                                                                                                                                                                                                |
+| 7   | Branch protection          | Strict on `main`. `verify` is the only required status check. "Include administrators" Off.                                                                                                                                                                                                                                                                                  |
+| 8   | Backend for deploys        | Both production and (future) preview Vercel deploys point at staging Supabase `rjhzkgomgsztcyrhkywf`.                                                                                                                                                                                                                                                                        |
+| 9   | Failure notifications      | GitHub default email only.                                                                                                                                                                                                                                                                                                                                                   |
+| 10  | EAS Build trigger          | Manual only. `eas build --profile {preview,production} --non-interactive` from local machine. No CI integration.                                                                                                                                                                                                                                                             |
+| 11  | Migration drift mitigation | `migrate-staging` job runs `supabase db push --dry-run` then `supabase db push` against staging _before_ `deploy-production`. Atomic ordering via `needs:`.                                                                                                                                                                                                                  |
+| 12  | Migration safety policy    | Additive changes only in Phase 1 — see §7 (ADR-026).                                                                                                                                                                                                                                                                                                                         |
+| 13  | Local quality gates        | husky v9 + lint-staged. `pre-commit` runs `lint-staged` (~5s); `pre-push` runs `pnpm exec turbo run typecheck lint build test --filter="...[origin/main]"` followed by `pnpm format:check` (~15–90s). Scope of what the hook enforces: see row 4.                                                                                                                            |
+| 14  | Turbo remote cache         | Enabled via Vercel-hosted cache. `TURBO_TOKEN` + `TURBO_TEAM` secrets; one-time `turbo login && turbo link` locally.                                                                                                                                                                                                                                                         |
+| 15  | Concurrency control        | Single concurrency group `ci-${{ github.ref }}`. PRs cancel-in-progress on new pushes; pushes to `main` wait for older runs to finish (never cancel mid-`db push`).                                                                                                                                                                                                          |
 
 ---
 
@@ -67,10 +67,10 @@ This design represents the *minimal* shape of D7 that still satisfies the *inten
 
 ### 3.1 Branches
 
-| Branch | Purpose | Protection | Triggers |
-|---|---|---|---|
-| `main` | Production. The only long-lived branch. | Strict: PR required, `verify` required, linear history, up-to-date branches, force-push blocked. "Include administrators" Off. | `ci.yml` (all three jobs) |
-| `feat/*` | Feature branches | None | `ci.yml` (`verify` job only) |
+| Branch   | Purpose                                 | Protection                                                                                                                     | Triggers                     |
+| -------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------- |
+| `main`   | Production. The only long-lived branch. | Strict: PR required, `verify` required, linear history, up-to-date branches, force-push blocked. "Include administrators" Off. | `ci.yml` (all three jobs)    |
+| `feat/*` | Feature branches                        | None                                                                                                                           | `ci.yml` (`verify` job only) |
 
 There is no `develop` branch. There are no preview tag triggers. Mobile builds are not branch-triggered at all.
 
@@ -96,48 +96,48 @@ Two stores. Distinct purposes.
 
 #### GitHub Actions secrets (used by CI)
 
-| Secret | Used in job | Purpose |
-|---|---|---|
-| `VERCEL_TOKEN` | `deploy-production` | Vercel CLI authentication |
-| `VERCEL_ORG_ID` | `deploy-production` (exported as env var) | Binds CLI commands to the correct Vercel team/account — required on clean CI runners that have no committed `.vercel/project.json` |
-| `VERCEL_PROJECT_ID` | `deploy-production` (exported as env var) | Binds CLI commands to the correct Vercel project — required on clean CI runners |
-| `SUPABASE_ACCESS_TOKEN` | `migrate-staging` | Supabase CLI authentication |
-| `SUPABASE_DB_PASSWORD` | `migrate-staging` | Direct Postgres connection password for `db push` |
-| `TURBO_TOKEN` | `verify` (and others using `pnpm build`) | Turbo remote cache authentication |
-| `TURBO_TEAM` | `verify` | Turbo remote cache team binding |
+| Secret                  | Used in job                               | Purpose                                                                                                                            |
+| ----------------------- | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `VERCEL_TOKEN`          | `deploy-production`                       | Vercel CLI authentication                                                                                                          |
+| `VERCEL_ORG_ID`         | `deploy-production` (exported as env var) | Binds CLI commands to the correct Vercel team/account — required on clean CI runners that have no committed `.vercel/project.json` |
+| `VERCEL_PROJECT_ID`     | `deploy-production` (exported as env var) | Binds CLI commands to the correct Vercel project — required on clean CI runners                                                    |
+| `SUPABASE_ACCESS_TOKEN` | `migrate-staging`                         | Supabase CLI authentication                                                                                                        |
+| `SUPABASE_DB_PASSWORD`  | `migrate-staging`                         | Direct Postgres connection password for `db push`                                                                                  |
+| `TURBO_TOKEN`           | `verify` (and others using `pnpm build`)  | Turbo remote cache authentication                                                                                                  |
+| `TURBO_TEAM`            | `verify`                                  | Turbo remote cache team binding                                                                                                    |
 
 #### GitHub Actions repository variables (not secret)
 
-| Variable | Value | Purpose |
-|---|---|---|
+| Variable                       | Value                  | Purpose                                              |
+| ------------------------------ | ---------------------- | ---------------------------------------------------- |
 | `STAGING_SUPABASE_PROJECT_REF` | `rjhzkgomgsztcyrhkywf` | Project ref for `supabase link` in `migrate-staging` |
 
 #### Vercel project environment variables (set in Vercel dashboard)
 
-| Variable | Scope | Value |
-|---|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | Production + Preview | `https://rjhzkgomgsztcyrhkywf.supabase.co` |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Production + Preview | (staging anon key) |
-| `SUPABASE_URL` | Production + Preview | same URL |
-| `SUPABASE_ANON_KEY` | Production + Preview | same key |
-| `APP_URL` | Production + Preview | `https://fitsync.vercel.app` |
+| Variable                        | Scope                | Value                                      |
+| ------------------------------- | -------------------- | ------------------------------------------ |
+| `NEXT_PUBLIC_SUPABASE_URL`      | Production + Preview | `https://rjhzkgomgsztcyrhkywf.supabase.co` |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Production + Preview | (staging anon key)                         |
+| `SUPABASE_URL`                  | Production + Preview | same URL                                   |
+| `SUPABASE_ANON_KEY`             | Production + Preview | same key                                   |
+| `APP_URL`                       | Production + Preview | `https://fitsync.vercel.app`               |
 
 These are pulled into the build via `vercel pull --environment=production` before `vercel build` runs.
 
 #### Supabase Edge Function secrets
 
-| Secret | Set via | Used by |
-|---|---|---|
+| Secret           | Set via                                       | Used by                         |
+| ---------------- | --------------------------------------------- | ------------------------------- |
 | `RESEND_API_KEY` | `supabase secrets set` (manual, pre-existing) | `send-invitation` Edge Function |
 
 D7 does not add any new Edge Function secrets. The `send-invitation` Edge Function reads `acceptUrl` from its request body — the web Server Action at `apps/web/app/actions/relationships.ts` constructs the URL from `process.env['APP_URL']` and passes it to the function. Only the Vercel-side `APP_URL` env var is needed.
 
 #### EAS Secrets (used by EAS Build runners at build time)
 
-| Secret | Set via | Purpose |
-|---|---|---|
-| `SUPABASE_URL` | `eas secret:create --scope project --name SUPABASE_URL --value https://rjhzkgomgsztcyrhkywf.supabase.co` | Mobile app runtime |
-| `SUPABASE_ANON_KEY` | `eas secret:create --scope project --name SUPABASE_ANON_KEY --value <key>` | Mobile app runtime |
+| Secret              | Set via                                                                                                  | Purpose            |
+| ------------------- | -------------------------------------------------------------------------------------------------------- | ------------------ |
+| `SUPABASE_URL`      | `eas secret:create --scope project --name SUPABASE_URL --value https://rjhzkgomgsztcyrhkywf.supabase.co` | Mobile app runtime |
+| `SUPABASE_ANON_KEY` | `eas secret:create --scope project --name SUPABASE_ANON_KEY --value <key>`                               | Mobile app runtime |
 
 `SENTRY_DSN` and Sentry source map upload are deferred to D8.
 
@@ -195,21 +195,26 @@ eas init                           # creates the EAS project, may modify app.con
 ```
 
 **⚠ After `eas init` runs, immediately:**
+
 ```bash
 git diff apps/mobile/app.config.ts
 ```
 
 If `eas init` replaced the line `projectId: process.env['EAS_PROJECT_ID']` with a literal project ID string, **revert that specific line** back to `process.env['EAS_PROJECT_ID']` and instead put the actual ID in `apps/mobile/.env.local` as:
+
 ```
 EAS_PROJECT_ID=<actual-id-from-eas-init>
 ```
+
 This preserves the env-var-driven config pattern and keeps the actual ID out of the committed source.
 
 Then create the EAS Secrets used at build time by EAS Build runners:
+
 ```bash
 eas secret:create --scope project --name SUPABASE_URL --value https://rjhzkgomgsztcyrhkywf.supabase.co
 eas secret:create --scope project --name SUPABASE_ANON_KEY --value <staging-anon-key>
 ```
+
 (`SENTRY_DSN` is deferred to D8.)
 
 #### A4. Turbo remote cache
@@ -221,6 +226,7 @@ pnpm exec turbo link               # binds repo to Vercel-hosted Turbo cache
 ```
 
 Then capture two values for GitHub secrets (Phase B3):
+
 - `TURBO_TOKEN` — vercel.com/account/tokens → **Create Token** (separate from `VERCEL_TOKEN`; scope: account-wide)
 - `TURBO_TEAM` — for personal Hobby accounts, this is your Vercel username (`conradonegro`)
 
@@ -239,29 +245,30 @@ Repo → Settings → **Environments** → **New environment**:
 
 Settings → Secrets and variables → Actions → **Variables** tab → **New repository variable**:
 
-| Name | Value |
-|---|---|
+| Name                           | Value                  |
+| ------------------------------ | ---------------------- |
 | `STAGING_SUPABASE_PROJECT_REF` | `rjhzkgomgsztcyrhkywf` |
 
 #### B3. Repository secrets
 
 Settings → Secrets and variables → Actions → **Secrets** tab → **New repository secret**:
 
-| Name | Source |
-|---|---|
-| `VERCEL_TOKEN` | Captured in A1.7 |
-| `VERCEL_ORG_ID` | Captured in A1.7 |
-| `VERCEL_PROJECT_ID` | Captured in A1.7 |
-| `SUPABASE_ACCESS_TOKEN` | Captured in A2.1 |
-| `SUPABASE_DB_PASSWORD` | Captured in A2.2 |
-| `TURBO_TOKEN` | Captured in A4 |
-| `TURBO_TEAM` | Captured in A4 (e.g. `conradonegro`) |
+| Name                    | Source                               |
+| ----------------------- | ------------------------------------ |
+| `VERCEL_TOKEN`          | Captured in A1.7                     |
+| `VERCEL_ORG_ID`         | Captured in A1.7                     |
+| `VERCEL_PROJECT_ID`     | Captured in A1.7                     |
+| `SUPABASE_ACCESS_TOKEN` | Captured in A2.1                     |
+| `SUPABASE_DB_PASSWORD`  | Captured in A2.2                     |
+| `TURBO_TOKEN`           | Captured in A4                       |
+| `TURBO_TEAM`            | Captured in A4 (e.g. `conradonegro`) |
 
 ### Phase C — Safe first-run + pre-flight (during the D7 PR)
 
 #### C1. Initial PR lands with deploy jobs disabled
 
 The first D7 PR includes the full `ci.yml` but with `if: false` temporarily added to `migrate-staging` and `deploy-production` jobs. This lets the merge happen while:
+
 - Verifying `verify` job runs cleanly
 - Verifying pnpm install caches correctly on the runner
 - Verifying Turbo remote cache is reachable
@@ -279,8 +286,9 @@ supabase migration list --linked   # shows local vs remote migration state
 ```
 
 **Required state before proceeding:** every file in `supabase/migrations/` must appear as "applied" on remote. Investigate any drift before continuing:
-- If remote is *missing* migrations the repo has → run `supabase db push` locally to apply them
-- If remote *has extra* migrations the repo doesn't have → stop. This is divergence that needs manual reconciliation. Identify the divergent migration, decide whether to backport it to the repo or remove it from staging, and resolve before any CI-driven `db push` runs.
+
+- If remote is _missing_ migrations the repo has → run `supabase db push` locally to apply them
+- If remote _has extra_ migrations the repo doesn't have → stop. This is divergence that needs manual reconciliation. Identify the divergent migration, decide whether to backport it to the repo or remove it from staging, and resolve before any CI-driven `db push` runs.
 
 Do not proceed to C3 until `migration list --linked` reports zero drift.
 
@@ -341,8 +349,8 @@ concurrency:
 env:
   # Pin exact versions to prevent silent drift between local and CI.
   # gen:types output and CLI behavior change across versions.
-  SUPABASE_CLI_VERSION: '<TBD>'    # replace with actual version, e.g. '1.226.4'
-  VERCEL_CLI_VERSION: '<TBD>'      # replace with actual version, e.g. '37.10.0'
+  SUPABASE_CLI_VERSION: '<TBD>' # replace with actual version, e.g. '1.226.4'
+  VERCEL_CLI_VERSION: '<TBD>' # replace with actual version, e.g. '37.10.0'
 
 jobs:
   # ────────────────────────────────────────────────────
@@ -488,10 +496,10 @@ jobs:
 
 ### 5.1 Notes on the workflow
 
-- **Concurrency:** PRs cancel old runs on new pushes (fast feedback). Pushes to `main` *wait* for older runs (`cancel-in-progress: false` on push events) so `supabase db push` is never interrupted mid-migration.
+- **Concurrency:** PRs cancel old runs on new pushes (fast feedback). Pushes to `main` _wait_ for older runs (`cancel-in-progress: false` on push events) so `supabase db push` is never interrupted mid-migration.
 - **Pinned CLI versions:** Both Supabase CLI and Vercel CLI versions are pinned via `env` block. Drift between local and CI in `gen:types` output or `vercel build` behavior is a real source of false-positive failures otherwise.
 - **GitHub Environments:** `staging` and `production` are referenced as job-level environments. They must exist in repo settings before the workflow runs. They scaffold deploy history, optional approval gates, and per-environment secret scoping for future use.
-- **`vercel pull` reads runtime env vars from the Vercel project dashboard.** Application-level env vars (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `APP_URL`) live in the Vercel dashboard — they are downloaded into the build context by `vercel pull` before `vercel build` runs, and are *not* duplicated into GitHub. **Three Vercel-related values do live in GitHub Actions secrets**: `VERCEL_TOKEN` (authenticates the CLI), `VERCEL_ORG_ID` and `VERCEL_PROJECT_ID` (exported as env vars at the job level so the CLI can resolve which Vercel project to pull/build/deploy to on a clean runner with no committed `.vercel/project.json`).
+- **`vercel pull` reads runtime env vars from the Vercel project dashboard.** Application-level env vars (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `APP_URL`) live in the Vercel dashboard — they are downloaded into the build context by `vercel pull` before `vercel build` runs, and are _not_ duplicated into GitHub. **Three Vercel-related values do live in GitHub Actions secrets**: `VERCEL_TOKEN` (authenticates the CLI), `VERCEL_ORG_ID` and `VERCEL_PROJECT_ID` (exported as env vars at the job level so the CLI can resolve which Vercel project to pull/build/deploy to on a clean runner with no committed `.vercel/project.json`).
 - **No `EXPO_TOKEN`, no EAS Build job, no preview deploy job.** Mobile builds are manual; preview deploys are not in scope.
 
 ---
@@ -514,13 +522,8 @@ The `prepare` script runs automatically during `pnpm install` and initializes `.
 ```json
 {
   "lint-staged": {
-    "*.{ts,tsx,js,jsx}": [
-      "eslint --fix",
-      "prettier --write"
-    ],
-    "*.{json,md,yaml,yml,css}": [
-      "prettier --write"
-    ]
+    "*.{ts,tsx,js,jsx}": ["eslint --fix", "prettier --write"],
+    "*.{json,md,yaml,yml,css}": ["prettier --write"]
   }
 }
 ```
@@ -562,6 +565,7 @@ pnpm format:check
 ```
 
 Typical timings:
+
 - Single-package change: ~15–30 seconds (cache hits everywhere else)
 - Change to shared code: ~60–90 seconds
 - Full-repo change: ~120 seconds
@@ -584,7 +588,7 @@ These are documented intentional escape hatches for WIP commits and emergency fi
 - **Decision:** Quality gates are split across three enforcement tiers:
   1. **Per-commit (fast):** `lint-staged` via `.husky/pre-commit` runs eslint + prettier on staged files only (~5s).
   2. **Per-push (medium):** `.husky/pre-push` runs `pnpm exec turbo run typecheck lint build test --filter="...[origin/main]"` followed by `pnpm format:check` — covers typecheck, lint, build, Jest unit tests, and repo-wide format check for packages affected by the current diff against `origin/main` (~15–90s). Turbo remote cache keeps cache-hit packages near-free.
-  3. **Manual "before opening a PR" (developer discipline):** Playwright E2E (`cd apps/web && pnpm test:e2e`), `gen:types` drift (`pnpm gen:types && git diff --exit-code packages/database-types/src/types.ts`), and Maestro mobile E2E (`maestro test maestro/...`) are run manually when the developer is ready to open a PR. These are *not* in the pre-push hook because each requires external state (local Supabase running, simulator or device, a Next.js dev server) that isn't reliably present on every `git push`. Documented as a "Before opening a PR" checklist in `CLAUDE.md`.
+  3. **Manual "before opening a PR" (developer discipline):** Playwright E2E (`cd apps/web && pnpm test:e2e`), `gen:types` drift (`pnpm gen:types && git diff --exit-code packages/database-types/src/types.ts`), and Maestro mobile E2E (`maestro test maestro/...`) are run manually when the developer is ready to open a PR. These are _not_ in the pre-push hook because each requires external state (local Supabase running, simulator or device, a Next.js dev server) that isn't reliably present on every `git push`. Documented as a "Before opening a PR" checklist in `CLAUDE.md`.
 
   GitHub Actions CI runs a minimal `verify` job (typecheck + lint + format:check + build, ~90 seconds) as a safety net against hook bypasses, plus the deploy pipeline on push to `main` (`migrate-staging` → `deploy-production`). Production EAS Builds are invoked manually from the developer's machine — no CI trigger. There is no `develop` branch and no PR preview deployments.
 
@@ -592,8 +596,8 @@ These are documented intentional escape hatches for WIP commits and emergency fi
 
 - **Consequences:**
   - The pre-push hook enforces only what `turbo run` can handle via the affected-package filter: typecheck, lint, build, Jest. Plus a repo-wide `format:check`. It does **not** enforce Playwright, Maestro, or `gen:types` drift — those rely on developer discipline via the pre-PR checklist in `CLAUDE.md`.
-  - A developer who runs `git push --no-verify` without re-running checks, or who skips the pre-PR checklist, can push code that fails Jest, Playwright, Maestro, or `gen:types` drift. The CI `verify` job will *not* catch any of these — only typecheck/lint/format/build run in CI. The social contract is that `--no-verify` and skipping the checklist are conscious acts for emergencies and WIP, not routine.
-  - Phase 1 Acceptance Criteria AC-D7 is reworded to reflect this split. Jest failures block push via the pre-push hook. Playwright/Maestro/gen:types drift block *opening a PR* via the manual checklist, not push. Typecheck/lint/format/build are the only things that also block merge in CI.
+  - A developer who runs `git push --no-verify` without re-running checks, or who skips the pre-PR checklist, can push code that fails Jest, Playwright, Maestro, or `gen:types` drift. The CI `verify` job will _not_ catch any of these — only typecheck/lint/format/build run in CI. The social contract is that `--no-verify` and skipping the checklist are conscious acts for emergencies and WIP, not routine.
+  - Phase 1 Acceptance Criteria AC-D7 is reworded to reflect this split. Jest failures block push via the pre-push hook. Playwright/Maestro/gen:types drift block _opening a PR_ via the manual checklist, not push. Typecheck/lint/format/build are the only things that also block merge in CI.
   - When the team grows beyond one developer, this ADR should be revisited. The "trust the hook + trust the checklist" model scales poorly beyond ~3 contributors because each new machine is a new opportunity for hook installation to fail silently and each new contributor is a new chance to skip the checklist.
   - `deploy-web.yml` and `eas-build.yml` as separate workflow files are deleted. Vercel deploy concerns fold into `ci.yml`; EAS Build is removed from CI entirely.
   - There is no `develop` branch and no `preview-*` tag triggers. EAS preview builds are invoked manually with `eas build --profile preview --non-interactive` when a preview is actually needed.
@@ -705,14 +709,17 @@ Remove the part about "add Jest + Playwright + EAS + Vercel deploy" — Jest run
 
 Add the following sections (additive only — no changes to existing content):
 
-```markdown
+````markdown
 ## D7 — Migrations policy (Phase 1)
+
 Additive changes only: new tables, new columns (nullable or defaulted), new indexes, new RLS policies. No column drops, no type changes, no data rewrites. Destructive changes require a two-PR dance (add new thing → deploy → backfill; then drop old thing in a follow-up). Reason: `supabase db push` is forward-only and staging rollback means restoring from daily backup. See ADR-026.
 
 ## D7 — Local hooks
+
 `pnpm install` wires up husky via the `prepare` script. `.husky/pre-commit` runs `pnpm exec lint-staged` on staged files only (~5s). `.husky/pre-push` runs `pnpm exec turbo run typecheck lint build test --filter="...[origin/main]"` followed by `pnpm format:check` (~15–90s depending on what changed). **Scope of the pre-push hook: typecheck, lint, build, Jest unit tests (via turbo), and repo-wide format:check only.** Playwright, Maestro, and `gen:types` drift are NOT in the hook — see the "Before opening a PR" checklist below. Use `git commit --no-verify` / `git push --no-verify` consciously for WIP and emergencies — CI's `verify` job is the only safety net when bypassed.
 
 ## D7 — Before opening a PR (manual checklist)
+
 Run these before opening any PR. The pre-push hook cannot run them because each needs external state that isn't reliably present on every push.
 
 1. **Playwright web E2E** — requires local Supabase running with seed data + the Next.js dev server:
@@ -721,6 +728,8 @@ Run these before opening any PR. The pre-push hook cannot run them because each 
    pnpm dev --filter=@fitsync/web &         # background
    cd apps/web && pnpm test:e2e
    ```
+````
+
 2. **gen:types drift check** — required when `supabase/migrations/` has changed. Requires local Supabase running:
    ```bash
    pnpm gen:types
@@ -734,17 +743,22 @@ Run these before opening any PR. The pre-push hook cannot run them because each 
 4. If any of the above fail, fix locally before pushing the PR.
 
 ## D7 — Mobile builds (manual)
+
 EAS production and preview builds are invoked locally, not by CI:
+
 - Preview: `cd apps/mobile && eas build --profile preview --non-interactive`
 - Production: `cd apps/mobile && eas build --profile production --non-interactive`
 
 Free-tier quota: ~30 builds/month. Queue times: 20–40 min. Apple Developer ($99/yr) and Google Play Console ($25 one-time) required for actual store distribution.
 
 ## D7 — Deployment provisioning (one-time)
+
 See `docs/superpowers/specs/2026-04-08-d7-cicd-pipeline-design.md` §4 for one-time setup of Vercel project, Supabase access token + DB password, EAS init, Turbo remote cache, GitHub Environments, repository variables/secrets, and branch protection.
 
 ## D7 — Branch protection gotcha
+
 GitHub branch protection's "required status checks" matches by exact job `name:` string. The `verify` job in `ci.yml` is registered as `Verify`. If you rename the job, you must also update the required check name in repo settings — otherwise branch protection silently stops gating merges.
+
 ```
 
 ---
@@ -893,3 +907,4 @@ None. All decisions are locked at the end of this design phase. The next step is
 - **Skill used:** `superpowers:brainstorming`
 - **Next skill:** `superpowers:writing-plans`
 - **Status:** Awaiting user review of this spec file before plan generation begins.
+```

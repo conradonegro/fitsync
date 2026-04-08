@@ -1,0 +1,20 @@
+#!/usr/bin/env sh
+
+# Verification before push leaves the machine.
+# turbo's affected-package filter only checks packages that have changed
+# since origin/main, plus their dependents. Combined with Turbo remote
+# cache, even "dependent" packages typically hit cache unless their inputs
+# actually changed.
+#
+# Scope of this hook: typecheck, lint, build, and Jest unit tests (all via turbo),
+# plus repo-wide format:check (prettier runs at the root, not per-package).
+#
+# NOT covered by this hook (need external state — run manually before opening a PR):
+#   - Playwright E2E (apps/web/pnpm test:e2e) — needs local Supabase + seed data + Next.js dev server
+#   - Maestro mobile E2E — needs simulator or physical device
+#   - gen:types drift (pnpm gen:types && git diff) — needs local Supabase running
+# See CLAUDE.md "Before opening a PR" checklist for when to run each.
+
+set -e
+pnpm exec turbo run typecheck lint build test --filter="...[origin/main]"
+pnpm format:check
